@@ -21,6 +21,9 @@ repères personnels, hors-ligne, et **récitation guidée** (suivi vocal mot à 
 - **Reprise automatique** à la dernière position consultée.
 - **Affichage réglable** — thème *clair / sépia / sombre*, taille du texte, interligne,
   style calligraphique, traduction française et translittération optionnelles.
+- **Règles de tajwīd en couleurs** — affichage **activable/désactivable** colorant le texte
+  selon les règles (madd, ghunna, qalqala, ikhfāʾ, idghām, iqlāb, lettres muettes), avec
+  légende. Aide indicative à la lecture (données Quran.com), à valider par un comité.
 - **Écoute audio** — plusieurs récitateurs reconnus, surlignage synchronisé du verset,
   défilement automatique, lecture continue, **boucle configurable** (verset / plage / page),
   vitesse ajustable, lecture en arrière-plan (*Media Session*).
@@ -74,10 +77,12 @@ js/
   recognizer.js         Reconnaissance vocale (API Web Speech, interface remplaçable)
   tracker.js            Alignement récitation/texte + détection d'écarts (Lot 2)
   words.js              Découpage en mots (partagé rendu/alignement)
+  tajweed.js            Affichage des règles de tajwīd en couleurs (+ légende)
   icons.js              Jeu d'icônes SVG
 data/
   surahs.json           Métadonnées des 114 sourates
   quran.json            6236 versets (arabe + français + translittération + repères)
+  tajweed.json          Annotations de tajwīd par verset (chargé à la demande)
 fonts/                  Polices arabes (SIL OFL)
 icons/                  Icônes de l'application
 scripts/

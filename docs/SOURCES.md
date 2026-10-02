@@ -50,6 +50,17 @@ Toute traduction est **une interprétation du sens**, et non le Coran lui-même 
 **À vérifier avant diffusion :** droits de diffusion de chaque récitation, et documentation
 de la chaîne de transmission (*sanad / ijāza*) lorsque possible (ED-08).
 
+## Annotations de tajwīd (coloration)
+
+| | |
+|---|---|
+| **Source** | [Quran.com API v4](https://api.quran.com) — champ `text_uthmani_tajweed` |
+| **Usage** | coloration indicative des règles (madd, ghunna, qalqala, ikhfāʾ, idghām, iqlāb, lettres non prononcées) comme **aide à la lecture**, activable dans les réglages |
+| **Fichier** | `data/tajweed.json` (régénérable, chargé à la demande) |
+
+**À vérifier avant diffusion :** la coloration est une aide indicative et devrait être
+**validée par un comité de savants** (ED-06). Elle ne remplace pas l'enseignement d'un maître.
+
 ## Polices de caractères
 
 | Police | Licence | Usage |

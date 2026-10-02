@@ -144,6 +144,12 @@
         </div>
       </div>
       <div class="setting">
+        <div class="switch"><span class="lbl" style="margin:0">Règles de tajwīd (couleurs)</span>
+          <label class="toggle"><input type="checkbox" id="set-tajweed"><span class="track"></span></label>
+        </div>
+        <button class="btn" id="open-tajweed-legend" style="width:100%;margin-top:.5rem">Voir la légende des couleurs</button>
+      </div>
+      <div class="setting">
         <div class="lbl">Récitateur</div>
         <select id="set-reciter"></select>
       </div>
@@ -337,6 +343,19 @@
       <p style="font-size:.82rem;color:var(--text-soft)" id="rv-note"></p>
       <div class="rec-review-list" id="rv-list"></div>
       <div class="actions"><button class="btn primary" data-close-modal="recite-review">Fermer</button></div>
+    </div>
+  </div>
+
+  <!-- Légende tajwīd -->
+  <div class="modal" id="tajweed-legend">
+    <div class="card">
+      <h2>Règles de tajwīd — légende</h2>
+      <div id="tajweed-legend-list"></div>
+      <div class="consent-warn">
+        Coloration <b>indicative</b>, fournie comme aide à la lecture. Elle ne remplace pas
+        l'apprentissage auprès d'un maître et devrait être validée par un comité de savants.
+      </div>
+      <div class="actions"><button class="btn primary" data-close-modal="tajweed-legend">Fermer</button></div>
     </div>
   </div>
 

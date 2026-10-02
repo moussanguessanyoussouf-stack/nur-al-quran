@@ -35,6 +35,7 @@
 | LC-05 | Translittération et traduction | ✅ |
 | LC-07 | Choix du style calligraphique | ✅ *(Uthmani / Naskh)* |
 | LC-06 | Mot-à-mot | ⬜ |
+| — | **Règles de tajwīd en couleurs** (activable, avec légende) | ✅ *(aide à la lecture — données Quran.com)* |
 
 ## Écoute audio (§4.2)
 | Réf | Exigence | État |
@@ -55,7 +56,7 @@
 | RV-03 | Reprise sans rupture quand l'usager recommence | ✅ *(fenêtre de reprise arrière)* |
 | RV-06 | Relevé de fin de séance (passages à retravailler) | ✅ |
 | RV-05 | Fonctionnement hors ligne | 🟡 *(moteur Web Speech en ligne ; interface prête pour un moteur embarqué — ex. Vosk WASM)* |
-| RV-04 | Inexactitudes de tajwīd | ⬜ *(non traité de façon fiable)* |
+| RV-04 | Inexactitudes de tajwīd | 🟡 *(affichage des règles de tajwīd en **couleurs**, activable, avec légende — aide à la lecture ; la **détection d'erreurs** de tajwīd par la voix reste non traitée)* |
 
 ## Mémorisation (§4.4)
 | Réf | Exigence | État |

@@ -2,6 +2,7 @@
 import { DATA } from './data.js';
 import { store } from './store.js';
 import { splitArabic } from './words.js';
+import * as tajweed from './tajweed.js';
 
 const AR_DIGITS = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
 export const toArabicDigits = (n) => String(n).split('').map(d => AR_DIGITS[+d] ?? d).join('');
@@ -36,6 +37,8 @@ export function renderSurah(num, opts = {}) {
   const showTranslit = store.get('showTranslit');
   const wordMode = !!opts.wordMode;
   reader.wordMode = wordMode;
+  // Tajwīd : actif seulement hors mode récitation et si les données sont chargées
+  const tajweedMode = !wordMode && store.get('tajweed') && tajweed.isLoaded();
 
   let html = `
     <section class="surah-head">
@@ -45,11 +48,17 @@ export function renderSurah(num, opts = {}) {
     </section>`;
 
   if (sur.bism) {
-    html += `<div class="basmala">${esc(DATA.meta.basmala)}</div>`;
+    let bism = esc(DATA.meta.basmala);
+    if (tajweedMode) {
+      const bsmSeg = tajweed.segmentsFor(1, 1); // la basmala = Fātiḥa 1:1
+      const col = tajweed.renderTajweed(bsmSeg);
+      if (col) bism = col;
+    }
+    html += `<div class="basmala">${bism}</div>`;
   }
 
   for (const a of ayahs) {
-    html += ayahHTML(a, { showTrans, showTranslit, wordMode });
+    html += ayahHTML(a, { showTrans, showTranslit, wordMode, tajweedMode });
   }
 
   if (num < 114) {
@@ -75,12 +84,14 @@ function ayahGlobal(s, a) {
   return x ? x.g : '';
 }
 
-function ayahHTML(a, { showTrans, showTranslit, wordMode }) {
+function ayahHTML(a, { showTrans, showTranslit, wordMode, tajweedMode }) {
   const sajda = a.sj ? '<span class="ayah-sajda" title="Verset de prosternation">۩</span>' : '';
   let block = `<article class="ayah" id="a-${a.g}" data-g="${a.g}" data-s="${a.s}" data-a="${a.a}">`;
   let arabic;
   if (wordMode) {
     arabic = splitArabic(a.t).map((w, i) => `<span class="w" data-key="${a.g}:${i}">${esc(w)}</span>`).join(' ');
+  } else if (tajweedMode) {
+    arabic = tajweed.renderTajweed(tajweed.segmentsFor(a.s, a.a)) || esc(a.t);
   } else {
     arabic = esc(a.t);
   }

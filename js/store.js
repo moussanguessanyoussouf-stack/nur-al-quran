@@ -10,6 +10,7 @@ const DEFAULTS = {
   lead: 2.2,              // interligne
   showTrans: true,        // traduction française
   showTranslit: false,    // translittération
+  tajweed: false,         // affichage des règles de tajwīd en couleurs
   reciter: 'Alafasy_128kbps',
   rate: 1.0,
   position: { surah: 1, ayah: 1 },   // dernière position (LC-03)

@@ -8,6 +8,7 @@ import { reader, renderSurah, applyTypography, decorateAyah, setPlaying, toArabi
 import { search, highlightFrench } from './search.js';
 import { WebSpeechRecognizer, isSupported as sttSupported } from './recognizer.js';
 import { Tracker } from './tracker.js';
+import { loadTajweed, LEGEND as TAJWEED_LEGEND } from './tajweed.js';
 
 const $ = (id) => document.getElementById(id);
 const $$ = (sel, r = document) => [...r.querySelectorAll(sel)];
@@ -41,6 +42,11 @@ async function init() {
   // Reprise à la dernière position (LC-03)
   const pos = store.get('position') || { surah: 1, ayah: 1 };
   goTo(pos.surah, pos.ayah, { scroll: true, silent: true });
+
+  // Précharge le tajwīd si l'option était active
+  if (store.get('tajweed')) {
+    loadTajweed().then(() => { renderSurah(state.surah, { scrollToAyah: state.topAyah }); observeAyahs(); }).catch(() => {});
+  }
 
   // Avertissement d'intégrité éventuel (AR-02)
   if (DATA.integrity.checked && !DATA.integrity.ok) {
@@ -97,6 +103,16 @@ function buildSettings() {
   tr.onchange = () => { store.set('showTrans', tr.checked); renderSurah(state.surah, { scrollToAyah: state.topAyah }); observeAyahs(); };
   const tl = $('set-translit'); tl.checked = store.get('showTranslit');
   tl.onchange = () => { store.set('showTranslit', tl.checked); renderSurah(state.surah, { scrollToAyah: state.topAyah }); observeAyahs(); };
+  // Tajwīd (couleurs)
+  const tj = $('set-tajweed'); tj.checked = store.get('tajweed');
+  tj.onchange = async () => {
+    store.set('tajweed', tj.checked);
+    if (tj.checked) {
+      toast('Chargement des règles de tajwīd…');
+      try { await loadTajweed(); } catch { toast('Chargement des règles impossible.'); }
+    }
+    renderSurah(state.surah, { scrollToAyah: state.topAyah }); observeAyahs();
+  };
   // Vitesse
   const rate = $('set-rate'); rate.value = store.get('rate');
   $('val-rate').textContent = '×' + store.get('rate').toFixed(2);
@@ -460,6 +476,7 @@ function wireEvents() {
   $('open-bookmarks').onclick = openBookmarks;
   $('open-integrity').onclick = () => { renderIntegrity(); openModal('integrity-modal'); };
   $('open-about').onclick = () => openModal('about-modal');
+  $('open-tajweed-legend').onclick = openTajweedLegend;
 
   // Callbacks du lecteur
   reader.callbacks.openSheet = openSheet;
@@ -609,6 +626,13 @@ function showReciteReview(rev) {
     closeModal('recite-review'); goTo(s, a, { scroll: true });
   };
   openModal('recite-review');
+}
+
+function openTajweedLegend() {
+  $('tajweed-legend-list').innerHTML = TAJWEED_LEGEND.map(x =>
+    `<div class="legend-row"><span class="sw" style="background:var(--tj-${x.cat})"></span><span class="lab">${escapeHTML(x.label)}</span></div>`
+  ).join('');
+  openModal('tajweed-legend');
 }
 
 function wireRecite() {

@@ -421,6 +421,32 @@ select { appearance: none; }
 
 .empty-hint { text-align: center; color: var(--muted); font-size: .88rem; padding: 2rem 1rem; }
 
+/* ---- Couleurs tajwīd (affichage des règles) ---- */
+:root {
+  --tj-madd: #c0392b;     /* prolongation */
+  --tj-ghunna: #1e8449;   /* nasalisation */
+  --tj-qalqala: #2471a3;  /* rebond */
+  --tj-ikhfa: #7d3c98;    /* dissimulation */
+  --tj-idgham: #935116;   /* assimilation */
+  --tj-iqlab: #117a8b;    /* substitution */
+  --tj-silent: #9aa0a6;   /* non prononcé */
+}
+:root[data-theme="dark"] {
+  --tj-madd: #ff6b5e; --tj-ghunna: #52d39a; --tj-qalqala: #5aa9e6;
+  --tj-ikhfa: #c08ae0; --tj-idgham: #d79a4e; --tj-iqlab: #4fc9b4; --tj-silent: #8a9096;
+}
+.tj-madd { color: var(--tj-madd); }
+.tj-ghunna { color: var(--tj-ghunna); }
+.tj-qalqala { color: var(--tj-qalqala); }
+.tj-ikhfa { color: var(--tj-ikhfa); }
+.tj-idgham { color: var(--tj-idgham); }
+.tj-iqlab { color: var(--tj-iqlab); }
+.tj-silent { color: var(--tj-silent); }
+
+.legend-row { display: flex; align-items: center; gap: .6rem; padding: .5rem .2rem; border-bottom: 1px solid var(--border); }
+.legend-row .sw { width: 22px; height: 22px; border-radius: 6px; flex: 0 0 auto; }
+.legend-row .lab { font-size: .88rem; }
+
 /* ---- Mode récitation guidée (Lot 2) ---- */
 .w { transition: color .15s ease, background .15s ease; border-radius: 4px; padding: 0 .02em; }
 .w.w-matched { color: var(--accent); }
