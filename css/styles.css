@@ -421,6 +421,36 @@ select { appearance: none; }
 
 .empty-hint { text-align: center; color: var(--muted); font-size: .88rem; padding: 2rem 1rem; }
 
+/* ---- Tableau de bord (Lot 4) ---- */
+.dash-goal { display: flex; align-items: center; gap: 1rem; padding: .6rem .2rem 1rem; }
+.ring {
+  width: 84px; height: 84px; border-radius: 50%; flex: 0 0 auto;
+  display: grid; place-items: center; position: relative;
+  background: conic-gradient(var(--accent) calc(var(--p, 0) * 1%), var(--surface-2) 0);
+}
+.ring::before { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: var(--surface); }
+.ring span { position: relative; font-weight: 800; font-size: 1.3rem; color: var(--accent); }
+.dash-goal-txt b { display: block; font-size: 1rem; }
+.dash-goal-txt span { font-size: .82rem; color: var(--text-soft); }
+
+.minichart { display: flex; align-items: flex-end; gap: 3px; height: 54px; margin: .4rem 0 1rem; }
+.minichart .bar { flex: 1; background: var(--surface-2); border-radius: 3px 3px 0 0; min-height: 3px; position: relative; }
+.minichart .bar.has { background: var(--accent); }
+.minichart .bar.today { outline: 2px solid var(--gold); outline-offset: 1px; }
+
+.dash-card { border: 1px solid var(--border); border-radius: var(--radius); padding: .8rem; margin: .7rem 0; background: var(--surface); }
+.dash-card h3 { margin: 0 0 .5rem; font-size: .95rem; }
+.dash-plan-portion { font-family: var(--font-ar); direction: rtl; font-size: 1.1rem; }
+.dash-row { display: flex; gap: .5rem; margin-top: .5rem; }
+.dash-row .btn { flex: 1; }
+.plan-bar { height: 8px; background: var(--surface-2); border-radius: 8px; overflow: hidden; margin: .4rem 0; }
+.plan-bar > i { display: block; height: 100%; background: var(--accent); border-radius: 8px; }
+.plan-item { display: flex; align-items: center; gap: .5rem; padding: .5rem .3rem; border-bottom: 1px solid var(--border); }
+.plan-item .nm { flex: 1; font-size: .86rem; }
+.plan-item .nm small { display: block; color: var(--muted); font-size: .72rem; }
+.plan-item.active .nm b { color: var(--accent); }
+.behind-badge { font-size: .7rem; color: var(--danger); }
+
 /* ---- Mémorisation (ḥifẓ) ---- */
 .ayah-ar.masked { cursor: pointer; border-radius: 8px; transition: opacity .2s, text-shadow .2s, color .2s; }
 .ayah-ar.mask-fade:not(.revealed) { opacity: .1; }

@@ -36,6 +36,10 @@ repères personnels, hors-ligne, et **récitation guidée** (suivi vocal mot à 
   mot à mot** (surlignage « doigt qui suit »), **détecte les écarts** (omissions, ajouts),
   **gère les reprises**, et produit un **relevé de fin de séance**. Moteur de reconnaissance :
   API Web Speech (Chrome/Edge, en ligne) ; moteur d'alignement/détection local et remplaçable.
+- **Tableau de bord & plans (Lot 4)** — statistiques (pages du jour, **objectif quotidien**,
+  **régularité/séries**, temps de lecture), **plans de lecture** (khatma 30/60/90 j, Ramadan,
+  personnalisé) avec portion du jour, et **sauvegarde/restauration** (export/import de fichier)
+  + suppression totale des données. *(Pas de synchronisation cloud : transfert manuel par fichier.)*
 - **Mémorisation / ḥifẓ (Lot 3)** — objectifs (verset / plage / page / juzʾ),
   **masquage progressif non destructif** (visible → estompé → masqué, révélation au toucher),
   **répétition espacée** (boîtes de Leitner) avec révision des passages dus,
@@ -83,6 +87,8 @@ js/
   words.js              Découpage en mots (partagé rendu/alignement)
   tajweed.js            Affichage des règles de tajwīd en couleurs (+ légende)
   hifz.js               Mémorisation : répétition espacée (Leitner), objectifs, journal
+  stats.js              Statistiques : pages lues, temps, séries, objectif quotidien
+  plans.js              Plans de lecture (khatma, Ramadan, personnalisé)
   icons.js              Jeu d'icônes SVG
 data/
   surahs.json           Métadonnées des 114 sourates
@@ -120,7 +126,8 @@ docs/
   *(Prochaine étape : moteur embarqué hors-ligne — ex. Vosk WASM — pour RV-05 complet, et tajwīd indicatif RV-04.)*
 - **Lot 3** — ✅ mémorisation : objectifs, masquage progressif, répétition espacée, journal.
   *(Prochaine étape : vérification vocale intégrée à la révision — HF-04.)*
-- **Lot 4** — comptes facultatifs, synchronisation, plans et assignations, statistiques.
+- **Lot 4** — ✅ statistiques, plans de lecture, sauvegarde/restauration locale.
+  *(Reste : synchronisation cloud + assignations tuteur = nécessitent un backend.)*
 - **Lot 5** — lectures multiples (qirāʾāt), langues additionnelles, compagnon du fidèle.
 
 Voir [docs/CONFORMITE-CDC.md](docs/CONFORMITE-CDC.md) pour le détail de la couverture.

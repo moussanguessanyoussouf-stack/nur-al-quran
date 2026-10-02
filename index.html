@@ -158,6 +158,9 @@
         <input type="range" id="set-rate" min="0.75" max="1.5" step="0.05" />
       </div>
       <div class="setting">
+        <button class="btn primary full" id="open-dash" style="width:100%">📊 Tableau de bord</button>
+      </div>
+      <div class="setting">
         <button class="btn full" id="open-bookmarks" style="width:100%">⭐ Mes repères &amp; notes</button>
       </div>
       <div class="setting">
@@ -336,6 +339,83 @@
 
       <div id="hifztab-journal" class="hidden">
         <div id="hifz-journal-list"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Tableau de bord (statistiques, plans, données) -->
+  <aside class="panel right" id="dash-panel" aria-label="Tableau de bord">
+    <div class="panel-head">
+      <h2>Tableau de bord</h2>
+      <button class="iconbtn" data-close="dash" aria-label="Fermer" data-ic="close"></button>
+    </div>
+    <div class="tabs">
+      <button data-dashtab="today" class="active">Aujourd'hui</button>
+      <button data-dashtab="plans">Plans</button>
+      <button data-dashtab="data">Données</button>
+    </div>
+    <div class="panel-body">
+      <div id="dashtab-today">
+        <div class="dash-goal">
+          <div class="ring" id="dash-ring"><span id="dash-ring-num">0</span></div>
+          <div class="dash-goal-txt">
+            <b id="dash-goal-line">0 / 1 page aujourd'hui</b>
+            <span id="dash-encourage"></span>
+          </div>
+        </div>
+        <div class="hifz-stats">
+          <div class="cell"><b id="dash-streak">0</b><span>jours de suite</span></div>
+          <div class="cell"><b id="dash-time">0&nbsp;min</b><span>lecture aujourd'hui</span></div>
+          <div class="cell"><b id="dash-active">0</b><span>jours actifs</span></div>
+        </div>
+        <div class="setting">
+          <div class="lbl">Objectif quotidien <span class="val" id="dash-goalval"></span></div>
+          <input type="range" id="dash-goalrange" min="1" max="20" step="1">
+        </div>
+        <div class="minichart" id="dash-chart" aria-label="14 derniers jours"></div>
+
+        <div class="dash-card" id="dash-plan-card">
+          <h3>Portion du jour</h3>
+          <div id="dash-plan-body"></div>
+        </div>
+        <div class="dash-card">
+          <h3>Mémorisation</h3>
+          <div id="dash-hifz-body"></div>
+        </div>
+      </div>
+
+      <div id="dashtab-plans" class="hidden">
+        <div id="dash-active-plan"></div>
+        <div class="setting">
+          <div class="lbl">Nouveau plan</div>
+          <select id="plan-template"></select>
+          <button class="btn primary" id="plan-create" style="width:100%;margin-top:.5rem">Créer ce plan</button>
+        </div>
+        <div class="setting">
+          <div class="lbl">Ou personnalisé</div>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <input class="text-input" type="number" id="plan-ppd" min="1" max="100" value="2" style="flex:1">
+            <span style="font-size:.8rem;color:var(--text-soft)">page(s)/jour</span>
+            <button class="btn" id="plan-create-custom">Créer</button>
+          </div>
+        </div>
+        <div id="plan-list"></div>
+      </div>
+
+      <div id="dashtab-data" class="hidden">
+        <p class="notice">Vos données restent sur votre appareil. L'export sert de sauvegarde
+          et permet de transférer vos repères, votre mémorisation et votre progression vers un
+          autre appareil (il n'y a pas de synchronisation automatique par serveur).</p>
+        <div class="setting">
+          <button class="btn primary" id="data-export" style="width:100%">⤓ Exporter mes données</button>
+        </div>
+        <div class="setting">
+          <button class="btn" id="data-import" style="width:100%">⤒ Importer des données</button>
+          <input type="file" id="data-import-file" accept="application/json,.json" hidden>
+        </div>
+        <div class="setting">
+          <button class="btn danger" id="data-delete" style="width:100%">🗑 Supprimer toutes mes données</button>
+        </div>
       </div>
     </div>
   </aside>

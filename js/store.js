@@ -20,6 +20,9 @@ const DEFAULTS = {
   recents: [],            // [{s,a,ts}] derniers emplacements visités
   hifz: {},               // mémorisation : { globalAyah: {g, box, due, reps, lapses, created, last} }
   maskLevel: 2,           // niveau de masquage par défaut (0 aucun, 1 estompé, 2 masqué)
+  stats: { days: {} },    // suivi : { days: { "YYYY-MM-DD": { pages: {p:1}, secs: n } } }
+  goalPages: 1,           // objectif quotidien (pages du Mushaf)
+  plans: { active: null, items: {} }, // plans de lecture
 };
 
 let data = load();
@@ -111,6 +114,26 @@ export const store = {
   hifzRemove(g) { delete data.hifz[g]; persist(); },
   hifzSet(g, item) { data.hifz[g] = item; persist(); },
   hifzSave() { persist(); },
+
+  // ---- Sauvegarde complète / restauration / effacement (CU-03, CU-04) ----
+  exportAll() {
+    return JSON.stringify({ app: 'nur-quran', version: 1, exported: new Date().toISOString(), data }, null, 2);
+  },
+  importAll(obj, { merge = false } = {}) {
+    const incoming = obj && obj.data ? obj.data : obj;
+    if (!incoming || typeof incoming !== 'object') throw new Error('Fichier invalide');
+    if (merge) {
+      data.bookmarks = [...new Set([...(data.bookmarks || []), ...(incoming.bookmarks || [])])];
+      data.notes = { ...data.notes, ...(incoming.notes || {}) };
+      data.highlights = { ...data.highlights, ...(incoming.highlights || {}) };
+      data.hifz = { ...data.hifz, ...(incoming.hifz || {}) };
+      if (incoming.plans) data.plans = incoming.plans;
+      if (incoming.stats) data.stats = incoming.stats;
+    } else {
+      data = { ...structuredClone(DEFAULTS), ...incoming };
+    }
+    persist();
+  },
 
   reset() { data = structuredClone(DEFAULTS); persist(); },
 };

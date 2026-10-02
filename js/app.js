@@ -11,6 +11,8 @@ import { WebSpeechRecognizer, isSupported as sttSupported } from './recognizer.j
 import { Tracker } from './tracker.js';
 import { loadTajweed, LEGEND as TAJWEED_LEGEND } from './tajweed.js';
 import * as hifz from './hifz.js';
+import * as stats from './stats.js';
+import * as plans from './plans.js';
 
 const $ = (id) => document.getElementById(id);
 const $$ = (sel, r = document) => [...r.querySelectorAll(sel)];
@@ -65,6 +67,14 @@ async function init() {
   }
 
   registerSW();
+  startReadingClock();
+}
+
+// Compteur de temps de lecture (ST-02) : +15 s tant que l'onglet est visible.
+function startReadingClock() {
+  setInterval(() => {
+    if (document.visibilityState === 'visible') stats.addSeconds(15);
+  }, 15000);
 }
 
 // ========================================================================
@@ -236,6 +246,8 @@ function observeAyahs() {
       state.topAyah = a;
       updateTitle(s, a);
       store.setPosition(s, a);
+      const ay = DATA.byGlobal.get(+node.dataset.g);
+      if (ay) stats.recordPage(ay.p);
     }
   }, { rootMargin: '-80px 0px -60% 0px', threshold: 0 });
   $$('.ayah').forEach(n => state.observer.observe(n));
@@ -461,7 +473,7 @@ function runSearch(q) {
 // ========================================================================
 // Panneaux / modales / scrim
 // ========================================================================
-const PANELS = { nav: 'nav-panel', settings: 'settings-panel', bookmarks: 'bookmarks-panel', hifz: 'hifz-panel' };
+const PANELS = { nav: 'nav-panel', settings: 'settings-panel', bookmarks: 'bookmarks-panel', hifz: 'hifz-panel', dash: 'dash-panel' };
 function openPanel(name) { $(PANELS[name]).classList.add('open'); $('scrim').classList.add('open'); }
 function closePanel(name) { $(PANELS[name]).classList.remove('open'); if (!anyPanelOpen() && !sheetOpen()) $('scrim').classList.remove('open'); }
 function anyPanelOpen() { return Object.values(PANELS).some(id => $(id).classList.contains('open')); }
@@ -494,6 +506,7 @@ function wireEvents() {
   });
 
   $('open-bookmarks').onclick = openBookmarks;
+  $('open-dash').onclick = openDash;
   $('open-hifz').onclick = openHifz;
   $('open-integrity').onclick = () => { renderIntegrity(); openModal('integrity-modal'); };
   $('open-about').onclick = () => openModal('about-modal');
@@ -505,7 +518,7 @@ function wireEvents() {
   reader.callbacks.toggleBookmark = (g) => { const on = store.toggleBookmark(g); decorateAyah(g); toast(on ? 'Signet ajouté' : 'Signet retiré'); };
   reader.callbacks.nextSurah = () => goTo(state.surah + 1, 1, { scroll: true });
 
-  wireSheet(); wireRepeat(); wireNote(); wireBookmarks(); wireSearch(); wireRecite(); wireHifz();
+  wireSheet(); wireRepeat(); wireNote(); wireBookmarks(); wireSearch(); wireRecite(); wireHifz(); wireDash();
 
   document.addEventListener('keydown', onKey);
 }
@@ -810,6 +823,162 @@ function endReview() {
   closeModal('review-modal');
   if (player.current != null) player.stop();
   refreshHifzDash();
+}
+
+// ========================================================================
+// Tableau de bord : statistiques, plans, données (Lot 4)
+// ========================================================================
+let dashPlanSelectReady = false;
+function openDash() {
+  if (!dashPlanSelectReady) {
+    $('plan-template').innerHTML = plans.TEMPLATES.map(t => `<option value="${t.id}">${escapeHTML(t.name)}</option>`).join('');
+    dashPlanSelectReady = true;
+  }
+  renderDashToday();
+  renderPlansTab();
+  closePanel('settings');
+  openPanel('dash');
+}
+
+function renderDashToday() {
+  const s = stats.summary();
+  const pct = Math.min(100, Math.round((s.todayPages / s.goal) * 100));
+  $('dash-ring').style.setProperty('--p', pct);
+  $('dash-ring-num').textContent = s.todayPages;
+  $('dash-goal-line').textContent = `${s.todayPages} / ${s.goal} page(s) aujourd'hui`;
+  $('dash-encourage').textContent = s.goalMet
+    ? 'Objectif atteint — qu\'Allah l\'agrée.'
+    : (s.streak > 0 ? `Série de ${s.streak} jour(s), continuez.` : 'Commencez par une page, à votre rythme.');
+  $('dash-streak').textContent = s.streak;
+  $('dash-time').textContent = Math.round(s.todaySecs / 60) + ' min';
+  $('dash-active').textContent = s.activeDays;
+
+  const goal = store.get('goalPages') || 1;
+  $('dash-goalrange').value = goal;
+  $('dash-goalval').textContent = goal + ' p/j';
+
+  // mini-graphe 14 jours
+  const max = Math.max(1, ...s.last14.map(d => d.pages));
+  const todayK = stats.todayKey();
+  $('dash-chart').innerHTML = s.last14.map(d =>
+    `<div class="bar ${d.pages ? 'has' : ''} ${d.key === todayK ? 'today' : ''}" style="height:${Math.round((d.pages / max) * 100)}%" title="${d.key} : ${d.pages} page(s)"></div>`
+  ).join('');
+
+  renderDashPlanCard();
+  renderDashHifz();
+}
+
+function renderDashPlanCard() {
+  const plan = plans.active();
+  const body = $('dash-plan-body');
+  if (!plan) { body.innerHTML = `<div style="font-size:.85rem;color:var(--text-soft)">Aucun plan actif. Créez-en un dans l'onglet « Plans ».</div>`; return; }
+  const pr = plans.progress(plan);
+  if (pr.finished) { body.innerHTML = `<b>Plan terminé 🎉</b><div class="plan-bar"><i style="width:100%"></i></div>`; return; }
+  body.innerHTML = `
+    <div style="font-size:.82rem;color:var(--text-soft)">${escapeHTML(plan.name)} — jour ${pr.done + 1}/${pr.total}
+      ${pr.behind > 0 ? `<span class="behind-badge">· ${pr.behind} en retard</span>` : ''}</div>
+    <div class="dash-plan-portion">Pages ${pr.next.from} → ${pr.next.to}</div>
+    <div class="plan-bar"><i style="width:${pr.percent}%"></i></div>
+    <div class="dash-row">
+      <button class="btn primary" id="dash-plan-read">Lire</button>
+      <button class="btn" id="dash-plan-done">Marquer fait</button>
+    </div>`;
+  $('dash-plan-read').onclick = () => { const list = nav.page(pr.next.from); if (list[0]) { goTo(list[0].s, list[0].a, { scroll: true }); closePanel('dash'); } };
+  $('dash-plan-done').onclick = () => { plans.markNextDone(); renderDashToday(); renderPlansTab(); toast('Portion validée'); };
+}
+
+function renderDashHifz() {
+  const st = hifz.stats();
+  const body = $('dash-hifz-body');
+  body.innerHTML = `
+    <div style="font-size:.85rem;color:var(--text-soft)">${st.total} verset(s) · ${st.known} acquis · <b style="color:var(--danger)">${st.due} à réviser</b></div>
+    ${st.due ? `<div class="dash-row"><button class="btn primary" id="dash-hifz-review">Réviser maintenant</button></div>` : ''}`;
+  if (st.due) $('dash-hifz-review').onclick = () => { closePanel('dash'); startReview(); };
+}
+
+function renderPlansTab() {
+  const plan = plans.active();
+  const act = $('dash-active-plan');
+  if (plan) {
+    const pr = plans.progress(plan);
+    act.innerHTML = `<div class="dash-card"><h3>Plan actif</h3>
+      <b>${escapeHTML(plan.name)}</b>
+      <div class="plan-bar"><i style="width:${pr.percent}%"></i></div>
+      <div style="font-size:.8rem;color:var(--text-soft)">${pr.done}/${pr.total} portions · ${pr.percent}%</div></div>`;
+  } else { act.innerHTML = ''; }
+
+  const items = plans.all().items;
+  const keys = Object.keys(items);
+  $('plan-list').innerHTML = keys.length ? keys.map(id => {
+    const p = items[id]; const pr = plans.progress(p);
+    const active = plans.all().active === id;
+    return `<div class="plan-item ${active ? 'active' : ''}">
+      <div class="nm"><b>${escapeHTML(p.name)}</b><small>${pr.done}/${pr.total} · ${pr.percent}%</small></div>
+      ${active ? '<span style="font-size:.72rem;color:var(--accent)">actif</span>' : `<button class="btn" data-activate="${id}" style="padding:.3rem .5rem">Activer</button>`}
+      <button class="iconbtn" data-delplan="${id}" aria-label="Supprimer" style="width:36px;height:36px"></button>
+    </div>`;
+  }).join('') : `<div class="empty-hint">Aucun plan.</div>`;
+  $('plan-list').querySelectorAll('[data-delplan]').forEach(b => b.innerHTML = ICONS.trash);
+  $('plan-list').onclick = (e) => {
+    const act = e.target.closest('[data-activate]'); const del = e.target.closest('[data-delplan]');
+    if (act) { plans.setActive(act.dataset.activate); renderPlansTab(); renderDashToday(); }
+    else if (del) { plans.remove(del.dataset.delplan); renderPlansTab(); renderDashToday(); toast('Plan supprimé'); }
+  };
+}
+
+function wireDash() {
+  $$('#dash-panel [data-dashtab]').forEach(b => b.onclick = () => {
+    $$('#dash-panel [data-dashtab]').forEach(x => x.classList.toggle('active', x === b));
+    $('dashtab-today').classList.toggle('hidden', b.dataset.dashtab !== 'today');
+    $('dashtab-plans').classList.toggle('hidden', b.dataset.dashtab !== 'plans');
+    $('dashtab-data').classList.toggle('hidden', b.dataset.dashtab !== 'data');
+    if (b.dataset.dashtab === 'today') renderDashToday();
+    if (b.dataset.dashtab === 'plans') renderPlansTab();
+  });
+  $('dash-goalrange').oninput = () => { store.set('goalPages', +$('dash-goalrange').value); $('dash-goalval').textContent = $('dash-goalrange').value + ' p/j'; renderDashToday(); };
+  $('plan-create').onclick = () => { plans.createFromTemplate($('plan-template').value); renderPlansTab(); renderDashToday(); toast('Plan créé'); };
+  $('plan-create-custom').onclick = () => { plans.createCustom(+$('plan-ppd').value || 1); renderPlansTab(); renderDashToday(); toast('Plan créé'); };
+
+  // Données
+  $('data-export').onclick = exportData;
+  $('data-import').onclick = () => $('data-import-file').click();
+  $('data-import-file').onchange = importData;
+  $('data-delete').onclick = deleteAllData;
+}
+
+function exportData() {
+  const blob = new Blob([store.exportAll()], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `nur-al-quran-sauvegarde-${stats.todayKey()}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('Export généré');
+}
+
+function importData(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const obj = JSON.parse(reader.result);
+      const merge = confirm('Fusionner avec vos données actuelles ?\n\nOK = fusionner · Annuler = remplacer');
+      store.importAll(obj, { merge });
+      toast('Données importées');
+      renderDashToday(); renderPlansTab(); decorateHifz();
+      renderSurah(state.surah, { scrollToAyah: state.topAyah }); observeAyahs();
+    } catch (err) { toast('Fichier invalide'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function deleteAllData() {
+  if (!confirm('Supprimer définitivement toutes vos données locales (repères, notes, mémorisation, progression, plans) ?')) return;
+  store.reset();
+  if (window.caches) caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
+  toast('Données supprimées');
+  setTimeout(() => location.reload(), 600);
 }
 
 // ========================================================================

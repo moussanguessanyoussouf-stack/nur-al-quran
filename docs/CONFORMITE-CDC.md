@@ -84,12 +84,28 @@
 | RP-03 | Surlignage par couleurs | ✅ |
 | RP-04 | Organisation / recherche des repères | 🟡 *(signets / notes / récents ; dossiers ultérieurs)* |
 
+## Suivi et statistiques (§4.7)
+| Réf | Exigence | État |
+|---|---|---|
+| ST-01 | Tableau de bord (lecture du jour, objectifs, mémorisation) | ✅ |
+| ST-02 | Régularité (séries), temps de lecture, pages parcourues | ✅ |
+| ST-03 | Objectif quotidien (pages/jour) et compte rendu | ✅ |
+| ST-04 | Encouragements bienveillants, sans compétition déplacée | ✅ |
+
+## Plans et assignations (§4.8)
+| Réf | Exigence | État |
+|---|---|---|
+| PL-01 | Plans de lecture (khatma 30/60/90 j, Ramadan, personnalisé) + portion du jour | ✅ |
+| PL-02 | Assignation tuteur → apprenants | ⬜ *(nécessite un backend multi-utilisateurs)* |
+| PL-03 | Suivi de l'apprenant sur un plan assigné | ⬜ *(idem backend ; transfert manuel par export possible)* |
+
 ## Compte & synchronisation (§4.9)
 | Réf | Exigence | État |
 |---|---|---|
 | CU-01 | Usage sans compte | ✅ |
-| CU-03 | Export / import des données locales | 🟡 *(export disponible dans le store ; UI à finaliser)* |
-| CU-02/CU-04 | Synchronisation / suppression de compte | ⬜ **Lot 4** |
+| CU-03 | Export / import des données locales | ✅ *(sauvegarde fichier, fusion ou remplacement)* |
+| CU-04 | Suppression de toutes les données | ✅ |
+| CU-02 | Synchronisation entre appareils | 🟡 *(transfert manuel par export/import, respectueux de la vie privée ; synchronisation cloud automatique = backend, hors périmètre statique)* |
 
 ## Non fonctionnel (§5)
 | Réf | Exigence | État |
