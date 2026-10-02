@@ -189,3 +189,46 @@ export function clearWordMarks() {
   document.querySelectorAll('.w.w-matched, .w.w-omitted, .w.w-current')
     .forEach(e => e.classList.remove('w-matched', 'w-omitted', 'w-current'));
 }
+
+// ---- Masquage pour la mémorisation (HF-02) — non destructif ----
+// level : 0 aucun · 1 estompé · 2 masqué. Révélation au clic.
+export function applyMask(gSet, level) {
+  clearMask();
+  if (!level) return;
+  const cls = level === 1 ? 'mask-fade' : 'mask-hide';
+  document.querySelectorAll('.ayah').forEach(node => {
+    const g = +node.dataset.g;
+    if (gSet.has(g)) {
+      const ar = node.querySelector('.ayah-ar');
+      if (ar) {
+        ar.classList.add('masked', cls);
+        ar.setAttribute('role', 'button');
+        ar.setAttribute('tabindex', '0');
+        ar.setAttribute('aria-label', 'Masqué — toucher pour révéler');
+        ar.addEventListener('click', toggleReveal);
+        ar.addEventListener('keydown', revealKey);
+      }
+    }
+  });
+}
+function toggleReveal(e) { e.currentTarget.classList.toggle('revealed'); }
+function revealKey(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.classList.toggle('revealed'); } }
+export function clearMask() {
+  document.querySelectorAll('.ayah-ar.masked').forEach(ar => {
+    ar.classList.remove('masked', 'mask-fade', 'mask-hide', 'revealed');
+    ar.removeAttribute('role'); ar.removeAttribute('tabindex'); ar.removeAttribute('aria-label');
+    ar.removeEventListener('click', toggleReveal);
+    ar.removeEventListener('keydown', revealKey);
+  });
+}
+export function revealAllMasks(on) {
+  document.querySelectorAll('.ayah-ar.masked').forEach(ar => ar.classList.toggle('revealed', on));
+}
+
+// Pastille d'état de mémorisation sur un verset
+export function markHifz(g, status) {
+  const node = document.getElementById('a-' + g);
+  if (!node) return;
+  node.classList.remove('hifz-new', 'hifz-learning', 'hifz-known');
+  if (status && status !== 'none') node.classList.add('hifz-' + status);
+}

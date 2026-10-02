@@ -18,6 +18,8 @@ const DEFAULTS = {
   notes: {},              // { globalAyah: "texte" }
   highlights: {},         // { globalAyah: "#color" }
   recents: [],            // [{s,a,ts}] derniers emplacements visités
+  hifz: {},               // mémorisation : { globalAyah: {g, box, due, reps, lapses, created, last} }
+  maskLevel: 2,           // niveau de masquage par défaut (0 aucun, 1 estompé, 2 masqué)
 };
 
 let data = load();
@@ -93,6 +95,22 @@ export const store = {
     if (obj.position) data.position = obj.position;
     persist();
   },
+
+  // ---- Mémorisation (ḥifẓ) ----
+  hifzAll: () => data.hifz,
+  hifzGet: (g) => data.hifz[g] || null,
+  hifzHas: (g) => !!data.hifz[g],
+  hifzAdd(g) {
+    if (!data.hifz[g]) {
+      data.hifz[g] = { g, box: 0, due: Date.now(), reps: 0, lapses: 0, created: Date.now(), last: 0 };
+      persist();
+      return true;
+    }
+    return false;
+  },
+  hifzRemove(g) { delete data.hifz[g]; persist(); },
+  hifzSet(g, item) { data.hifz[g] = item; persist(); },
+  hifzSave() { persist(); },
 
   reset() { data = structuredClone(DEFAULTS); persist(); },
 };

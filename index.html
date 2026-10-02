@@ -161,6 +161,9 @@
         <button class="btn full" id="open-bookmarks" style="width:100%">⭐ Mes repères &amp; notes</button>
       </div>
       <div class="setting">
+        <button class="btn full" id="open-hifz" style="width:100%">🧠 Mémorisation (ḥifẓ)</button>
+      </div>
+      <div class="setting">
         <button class="btn full" id="open-integrity" style="width:100%">🛡️ Intégrité &amp; sources</button>
       </div>
       <div class="setting">
@@ -179,6 +182,7 @@
           <button data-rep="ayah" class="active">Ce verset</button>
           <button data-rep="range">Plage</button>
           <button data-rep="page">Page</button>
+          <button data-rep="cumul">Cumul</button>
         </div>
       </div>
       <div class="setting" id="rep-range-row">
@@ -209,6 +213,7 @@
       <button data-act="note" data-ic-sheet="note"><span>Note</span></button>
       <button data-act="copy" data-ic-sheet="copy"><span>Copier</span></button>
       <button data-act="highlight" data-ic-sheet="highlight"><span>Surligner</span></button>
+      <button data-act="hifz" data-ic-sheet="brain"><span>Mémoriser</span></button>
       <button data-act="tafsir" data-ic-sheet="info"><span>Repères</span></button>
       <button data-act="close-sheet" data-ic-sheet="close"><span>Fermer</span></button>
     </div>
@@ -279,6 +284,97 @@
     </div>
     <div class="panel-body" id="bookmarks-body"></div>
   </aside>
+
+  <!-- Panneau Mémorisation (ḥifẓ) -->
+  <aside class="panel right" id="hifz-panel" aria-label="Mémorisation">
+    <div class="panel-head">
+      <h2>Mémorisation (ḥifẓ)</h2>
+      <button class="iconbtn" data-close="hifz" aria-label="Fermer" data-ic="close"></button>
+    </div>
+    <div class="tabs">
+      <button data-hifztab="dash" class="active">Tableau</button>
+      <button data-hifztab="add">Objectifs</button>
+      <button data-hifztab="journal">Journal</button>
+    </div>
+    <div class="panel-body">
+      <div id="hifztab-dash">
+        <div class="hifz-stats">
+          <div class="cell new"><b id="hz-new">0</b><span>nouveaux</span></div>
+          <div class="cell learn"><b id="hz-learn">0</b><span>en cours</span></div>
+          <div class="cell known"><b id="hz-known">0</b><span>acquis</span></div>
+          <div class="cell due"><b id="hz-due">0</b><span>à réviser</span></div>
+        </div>
+        <button class="btn primary" id="hz-review" style="width:100%">Commencer la révision</button>
+        <div class="setting" style="margin-top:.6rem">
+          <div class="lbl">Masquage pour mémoriser <span class="val" id="hz-masklabel"></span></div>
+          <div class="seg" id="hz-mask">
+            <button data-mask="0">Visible</button>
+            <button data-mask="1">Estompé</button>
+            <button data-mask="2">Masqué</button>
+          </div>
+        </div>
+        <button class="btn" id="hz-start-current" style="width:100%;margin-top:.5rem">Mémoriser la sourate affichée (masquage)</button>
+        <p class="notice" id="hz-empty-hint">Ajoutez des objectifs, ou touchez un verset puis « Mémoriser ».</p>
+      </div>
+
+      <div id="hifztab-add" class="hidden">
+        <div class="setting">
+          <div class="lbl">Par sourate</div>
+          <select id="hz-add-surah"></select>
+          <div class="jump-grid" style="padding:.4rem 0 0">
+            <div><label for="hz-from">Du verset</label><input class="text-input" type="number" id="hz-from" min="1" placeholder="1"></div>
+            <div><label for="hz-to">Au verset</label><input class="text-input" type="number" id="hz-to" min="1" placeholder="fin"></div>
+          </div>
+          <button class="btn primary" id="hz-add-surah-btn" style="width:100%;margin-top:.5rem">Ajouter</button>
+        </div>
+        <div class="setting">
+          <div class="lbl">Rapide</div>
+          <button class="btn" id="hz-add-page" style="width:100%;margin-bottom:.4rem">Ajouter la page affichée</button>
+          <button class="btn" id="hz-add-juz" style="width:100%">Ajouter le juzʾ affiché</button>
+        </div>
+      </div>
+
+      <div id="hifztab-journal" class="hidden">
+        <div id="hifz-journal-list"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Barre de masquage (session de mémorisation) -->
+  <div class="memobar" id="memobar">
+    <div class="row">
+      <div class="grow" id="memo-info">Mémorisation — touchez un verset masqué pour le révéler</div>
+      <div class="seg" id="memo-mask">
+        <button data-mask="1">Estompé</button>
+        <button data-mask="2">Masqué</button>
+      </div>
+      <button class="iconbtn" id="memo-peek" aria-label="Tout révéler" data-ic="focus"></button>
+      <button class="iconbtn" id="memo-exit" aria-label="Terminer" data-ic="close"></button>
+    </div>
+  </div>
+
+  <!-- Révision (répétition espacée) -->
+  <div class="modal" id="review-modal">
+    <div class="card">
+      <h2 id="review-title">Révision</h2>
+      <div class="review-ayah">
+        <div class="ref" id="review-ref"></div>
+        <div class="ar hidden-text" id="review-ar" dir="rtl"></div>
+        <div class="fr" id="review-fr"></div>
+      </div>
+      <button class="btn" id="review-reveal" style="width:100%">Révéler</button>
+      <button class="btn" id="review-listen" style="width:100%;margin-top:.4rem">🔊 Écouter le verset</button>
+      <div class="review-grade hidden" id="review-grade">
+        <button class="again" data-grade="again">À revoir</button>
+        <button class="good" data-grade="good">Correct</button>
+        <button class="easy" data-grade="easy">Facile</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.8rem">
+        <span style="font-size:.76rem;color:var(--muted)" id="review-count"></span>
+        <button class="btn" data-close-modal="review-modal">Terminer</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Recherche plein écran -->
   <div class="search-panel" id="search-panel">

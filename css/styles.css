@@ -421,6 +421,57 @@ select { appearance: none; }
 
 .empty-hint { text-align: center; color: var(--muted); font-size: .88rem; padding: 2rem 1rem; }
 
+/* ---- Mémorisation (ḥifẓ) ---- */
+.ayah-ar.masked { cursor: pointer; border-radius: 8px; transition: opacity .2s, text-shadow .2s, color .2s; }
+.ayah-ar.mask-fade:not(.revealed) { opacity: .1; }
+.ayah-ar.mask-hide:not(.revealed) { color: transparent; text-shadow: 0 0 15px var(--text); }
+.ayah-ar.masked:not(.revealed):hover { outline: 1px dashed var(--border); }
+
+.ayah.hifz-known .ayah-num { background: var(--accent); color: #fff; }
+.ayah.hifz-learning .ayah-num { box-shadow: 0 0 0 2px var(--gold); }
+.ayah.hifz-new .ayah-num { box-shadow: 0 0 0 2px var(--muted); }
+
+.memobar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 56;
+  background: color-mix(in srgb, var(--surface) 97%, transparent);
+  backdrop-filter: blur(10px); border-top: 2px solid var(--gold);
+  padding: .6rem max(.7rem, env(safe-area-inset-left)) calc(.6rem + env(safe-area-inset-bottom));
+  display: none;
+}
+.memobar.open { display: block; }
+.memobar .row { display: flex; align-items: center; gap: .5rem; max-width: var(--maxw); margin: 0 auto; }
+.memobar .row .grow { flex: 1; min-width: 0; font-size: .82rem; color: var(--text-soft); }
+.memobar .seg { flex: 0 0 auto; }
+.memobar .seg button { padding: .4rem .55rem; font-size: .78rem; }
+
+.hifz-stats { display: flex; gap: .4rem; text-align: center; margin: .3rem 0 .8rem; }
+.hifz-stats .cell { flex: 1; background: var(--surface-2); border-radius: var(--radius-sm); padding: .55rem .2rem; }
+.hifz-stats .cell b { display: block; font-size: 1.3rem; }
+.hifz-stats .cell.new b { color: var(--muted); }
+.hifz-stats .cell.learn b { color: var(--gold); }
+.hifz-stats .cell.known b { color: var(--accent); }
+.hifz-stats .cell.due b { color: var(--danger); }
+.hifz-stats .cell span { font-size: .68rem; color: var(--text-soft); }
+
+.review-ayah { text-align: center; padding: 1rem .5rem; }
+.review-ayah .ref { font-size: .8rem; color: var(--accent); font-weight: 700; margin-bottom: .6rem; }
+.review-ayah .ar { font-family: var(--font-ar); direction: rtl; font-size: 2rem; line-height: 2; min-height: 2.5em; }
+.review-ayah .ar.hidden-text { color: transparent; text-shadow: 0 0 16px var(--text); }
+.review-ayah .fr { font-size: .9rem; color: var(--text-soft); margin-top: .6rem; }
+.review-grade { display: grid; grid-template-columns: repeat(3,1fr); gap: .4rem; margin-top: .6rem; }
+.review-grade button { padding: .7rem .3rem; border-radius: var(--radius-sm); border: none; font-weight: 600; font-size: .82rem; color: #fff; }
+.review-grade .again { background: var(--danger); }
+.review-grade .good { background: var(--accent); }
+.review-grade .easy { background: var(--gold); }
+
+.journal-row { display: flex; align-items: center; gap: .5rem; padding: .45rem .3rem; border-bottom: 1px solid var(--border); }
+.journal-row .dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+.journal-row .dot.new { background: var(--muted); }
+.journal-row .dot.learning { background: var(--gold); }
+.journal-row .dot.known { background: var(--accent); }
+.journal-row .nm { flex: 1; font-size: .85rem; }
+.journal-row .cnt { font-size: .74rem; color: var(--text-soft); }
+
 /* ---- Couleurs tajwīd (affichage des règles) ---- */
 :root {
   --tj-madd: #c0392b;     /* prolongation */

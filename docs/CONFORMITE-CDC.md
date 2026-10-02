@@ -61,7 +61,12 @@
 ## Mémorisation (§4.4)
 | Réf | Exigence | État |
 |---|---|---|
-| HF-01..06 | Objectifs, masquage progressif, répétition espacée, auto-éval | ⬜ **Lot 3** |
+| HF-01 | Objectifs (verset / plage / page / juzʾ) et suivi | ✅ |
+| HF-02 | Masquage progressif (visible → estompé → masqué), non destructif | ✅ |
+| HF-03 | Répétition espacée (boîtes de Leitner), rappel des passages dus | ✅ |
+| HF-05 | Journal de mémorisation (nouveaux / en cours / acquis) | ✅ |
+| HF-06 | Enchaînement des répétitions d'un verset (cumul) | ✅ *(via la boucle audio « cumul »)* |
+| HF-04 | Auto-évaluation par la voix | 🟡 *(auto-évaluation manuelle en révision + récitation guidée du Lot 2 ; vérification vocale intégrée à la révision à venir)* |
 
 ## Recherche (§4.5)
 | Réf | Exigence | État |

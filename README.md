@@ -36,6 +36,10 @@ repères personnels, hors-ligne, et **récitation guidée** (suivi vocal mot à 
   mot à mot** (surlignage « doigt qui suit »), **détecte les écarts** (omissions, ajouts),
   **gère les reprises**, et produit un **relevé de fin de séance**. Moteur de reconnaissance :
   API Web Speech (Chrome/Edge, en ligne) ; moteur d'alignement/détection local et remplaçable.
+- **Mémorisation / ḥifẓ (Lot 3)** — objectifs (verset / plage / page / juzʾ),
+  **masquage progressif non destructif** (visible → estompé → masqué, révélation au toucher),
+  **répétition espacée** (boîtes de Leitner) avec révision des passages dus,
+  **journal** (nouveaux / en cours / acquis), et **répétition cumulative** audio.
 - **Respect & bienséance** — aucune publicité, mode de lecture recueillie (épuré),
   masquage non destructif, traitement digne du texte.
 
@@ -78,6 +82,7 @@ js/
   tracker.js            Alignement récitation/texte + détection d'écarts (Lot 2)
   words.js              Découpage en mots (partagé rendu/alignement)
   tajweed.js            Affichage des règles de tajwīd en couleurs (+ légende)
+  hifz.js               Mémorisation : répétition espacée (Leitner), objectifs, journal
   icons.js              Jeu d'icônes SVG
 data/
   surahs.json           Métadonnées des 114 sourates
@@ -113,7 +118,8 @@ docs/
 
 - **Lot 2** — ✅ reconnaissance de la récitation, détection des écarts, relevé de session.
   *(Prochaine étape : moteur embarqué hors-ligne — ex. Vosk WASM — pour RV-05 complet, et tajwīd indicatif RV-04.)*
-- **Lot 3** — mémorisation : masquage progressif, répétition espacée, auto-évaluation.
+- **Lot 3** — ✅ mémorisation : objectifs, masquage progressif, répétition espacée, journal.
+  *(Prochaine étape : vérification vocale intégrée à la révision — HF-04.)*
 - **Lot 4** — comptes facultatifs, synchronisation, plans et assignations, statistiques.
 - **Lot 5** — lectures multiples (qirāʾāt), langues additionnelles, compagnon du fidèle.
 

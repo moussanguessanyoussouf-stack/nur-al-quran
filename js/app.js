@@ -4,17 +4,21 @@ import { store } from './store.js';
 import { DATA, loadData, nav } from './data.js';
 import { player, RECITERS } from './audio.js';
 import { reader, renderSurah, applyTypography, decorateAyah, setPlaying, toArabicDigits,
-         markWord, setCurrentWord, clearWordMarks } from './reader.js';
+         markWord, setCurrentWord, clearWordMarks,
+         applyMask, clearMask, revealAllMasks, markHifz } from './reader.js';
 import { search, highlightFrench } from './search.js';
 import { WebSpeechRecognizer, isSupported as sttSupported } from './recognizer.js';
 import { Tracker } from './tracker.js';
 import { loadTajweed, LEGEND as TAJWEED_LEGEND } from './tajweed.js';
+import * as hifz from './hifz.js';
 
 const $ = (id) => document.getElementById(id);
 const $$ = (sel, r = document) => [...r.querySelectorAll(sel)];
 
 let state = { surah: 0, topAyah: 1, sheetG: null, observer: null };
 let recite = null; // session de récitation guidée en cours
+let memo = null;   // session de masquage (mémorisation) : { surah, level }
+let review = { queue: [], idx: 0 }; // session de révision espacée
 
 // ========================================================================
 // Démarrage
@@ -187,6 +191,7 @@ function currentJumpField() {
 function goTo(surah, ayah = 1, opts = {}) {
   surah = nav.clampSurah(surah);
   if (recite && !opts.silent) stopRecitation(false); // fin propre de la récitation si l'on navigue
+  if (memo && !opts.silent && memo.surah !== surah) exitMemo(); // sortie du masquage si l'on change de sourate
   if (state.surah !== surah || opts.force) {
     renderSurah(surah, { scrollToAyah: opts.scroll ? ayah : null });
     state.surah = surah;
@@ -198,6 +203,14 @@ function goTo(surah, ayah = 1, opts = {}) {
   state.topAyah = ayah;
   updateTitle(surah, ayah);
   if (!opts.silent) store.setPosition(surah, ayah);
+  decorateHifz();
+}
+
+function decorateHifz() {
+  for (const a of (DATA.bySurah.get(state.surah) || [])) {
+    const it = store.hifzGet(a.g);
+    if (it) markHifz(a.g, hifz.statusOf(it));
+  }
 }
 
 function ayahGlobal(s, a) {
@@ -282,6 +295,12 @@ function wireSheet() {
     else if (act === 'note') { closeSheet(); openNote(g); }
     else if (act === 'copy') { copyAyah(g); closeSheet(); }
     else if (act === 'highlight') { $('hl-colors').hidden = !$('hl-colors').hidden; }
+    else if (act === 'hifz') {
+      if (store.hifzHas(g)) { store.hifzRemove(g); toast('Retiré de la mémorisation'); }
+      else { store.hifzAdd(g); toast('Ajouté à la mémorisation'); }
+      markHifz(g, hifz.statusOf(store.hifzGet(g)));
+      closeSheet();
+    }
     else if (act === 'tafsir') { showRepers(g); closeSheet(); }
     else if (act === 'close-sheet') { closeSheet(); }
   });
@@ -323,22 +342,23 @@ function wireRepeat() {
   $$('#rep-scope button').forEach(b => b.onclick = () => {
     repScope = b.dataset.rep;
     $$('#rep-scope button').forEach(x => x.classList.toggle('active', x === b));
-    $('rep-range-row').style.display = repScope === 'range' ? '' : 'none';
+    $('rep-range-row').style.display = (repScope === 'range' || repScope === 'cumul') ? '' : 'none';
   });
   $('rep-count').oninput = () => $('val-rep').textContent = $('rep-count').value + '×';
   $('rep-apply').onclick = () => {
     const g = state.sheetG; const a = DATA.byGlobal.get(g);
     const count = +$('rep-count').value;
-    let from = g, to = g;
-    if (repScope === 'range') {
+    let from = g, to = g, mode = 'whole';
+    if (repScope === 'range' || repScope === 'cumul') {
       const f = Math.max(1, +$('rep-from').value), t = Math.min(DATA.surahByNum.get(a.s).cnt, +$('rep-to').value);
       from = ayahGlobal(a.s, Math.min(f, t)); to = ayahGlobal(a.s, Math.max(f, t));
+      if (repScope === 'cumul') mode = 'each'; // chaque verset répété N fois avant le suivant (HF-06)
     } else if (repScope === 'page') {
       const list = nav.page(a.p); from = list[0].g; to = list[list.length - 1].g;
     }
-    player.playAyah(from, { from, to, count, mode: 'whole' });
+    player.playAyah(from, { from, to, count, mode });
     closeModal('repeat-modal');
-    toast(`Boucle : ${count}× activée`);
+    toast(repScope === 'cumul' ? `Cumul : chaque verset ×${count}` : `Boucle : ${count}× activée`);
   };
 }
 
@@ -441,7 +461,7 @@ function runSearch(q) {
 // ========================================================================
 // Panneaux / modales / scrim
 // ========================================================================
-const PANELS = { nav: 'nav-panel', settings: 'settings-panel', bookmarks: 'bookmarks-panel' };
+const PANELS = { nav: 'nav-panel', settings: 'settings-panel', bookmarks: 'bookmarks-panel', hifz: 'hifz-panel' };
 function openPanel(name) { $(PANELS[name]).classList.add('open'); $('scrim').classList.add('open'); }
 function closePanel(name) { $(PANELS[name]).classList.remove('open'); if (!anyPanelOpen() && !sheetOpen()) $('scrim').classList.remove('open'); }
 function anyPanelOpen() { return Object.values(PANELS).some(id => $(id).classList.contains('open')); }
@@ -474,6 +494,7 @@ function wireEvents() {
   });
 
   $('open-bookmarks').onclick = openBookmarks;
+  $('open-hifz').onclick = openHifz;
   $('open-integrity').onclick = () => { renderIntegrity(); openModal('integrity-modal'); };
   $('open-about').onclick = () => openModal('about-modal');
   $('open-tajweed-legend').onclick = openTajweedLegend;
@@ -484,7 +505,7 @@ function wireEvents() {
   reader.callbacks.toggleBookmark = (g) => { const on = store.toggleBookmark(g); decorateAyah(g); toast(on ? 'Signet ajouté' : 'Signet retiré'); };
   reader.callbacks.nextSurah = () => goTo(state.surah + 1, 1, { scroll: true });
 
-  wireSheet(); wireRepeat(); wireNote(); wireBookmarks(); wireSearch(); wireRecite();
+  wireSheet(); wireRepeat(); wireNote(); wireBookmarks(); wireSearch(); wireRecite(); wireHifz();
 
   document.addEventListener('keydown', onKey);
 }
@@ -496,7 +517,7 @@ function toggleFocus() {
 
 function onKey(e) {
   if (e.target.matches('input, textarea, select')) return;
-  if (e.key === 'Escape') { if (recite) stopRecitation(true); closeAllPanels(); closeSearch(); ['repeat-modal','note-modal','integrity-modal','about-modal','recite-consent','recite-review'].forEach(closeModal); if (document.body.classList.contains('focus-mode')) toggleFocus(); }
+  if (e.key === 'Escape') { if (recite) stopRecitation(true); if (memo) exitMemo(); closeAllPanels(); closeSearch(); ['repeat-modal','note-modal','integrity-modal','about-modal','recite-consent','recite-review','tajweed-legend','review-modal'].forEach(closeModal); if (document.body.classList.contains('focus-mode')) toggleFocus(); }
   else if (e.key === ' ') { e.preventDefault(); $('au-play').click(); }
   else if (e.key === 'ArrowRight') player.prev && player.current != null && player.prev(); // RTL : droite = précédent
   else if (e.key === 'ArrowLeft') player.current != null && player.next();
@@ -640,6 +661,155 @@ function wireRecite() {
   $('recite-begin').onclick = startRecitation;
   $('recite-mic').onclick = toggleRecitePause;
   $('recite-stop').onclick = () => stopRecitation(true);
+}
+
+// ========================================================================
+// Mémorisation (ḥifẓ) — Lot 3
+// ========================================================================
+let hifzSelectReady = false;
+function openHifz() {
+  if (!hifzSelectReady) {
+    $('hz-add-surah').innerHTML = DATA.surahs.map(s => `<option value="${s.n}">${s.n}. ${escapeHTML(s.en)}</option>`).join('');
+    $('hz-add-surah').value = state.surah;
+    hifzSelectReady = true;
+  }
+  refreshHifzDash();
+  renderHifzJournal();
+  closePanel('settings');
+  openPanel('hifz');
+}
+
+function refreshHifzDash() {
+  const st = hifz.stats();
+  $('hz-new').textContent = st.new;
+  $('hz-learn').textContent = st.learning;
+  $('hz-known').textContent = st.known;
+  $('hz-due').textContent = st.due;
+  $('hz-review').disabled = st.due === 0;
+  $('hz-review').style.opacity = st.due === 0 ? .5 : 1;
+  $('hz-empty-hint').style.display = st.total ? 'none' : '';
+  const lvl = store.get('maskLevel');
+  $('hz-masklabel').textContent = ['Visible', 'Estompé', 'Masqué'][lvl] || '';
+  $$('#hz-mask button').forEach(b => b.classList.toggle('active', +b.dataset.mask === lvl));
+}
+
+function renderHifzJournal() {
+  const j = hifz.journal();
+  const box = $('hifz-journal-list');
+  if (!j.length) { box.innerHTML = `<div class="empty-hint">Aucun verset en mémorisation.</div>`; return; }
+  box.innerHTML = j.map(group => {
+    const s = DATA.surahByNum.get(group.s);
+    const counts = { new: 0, learning: 0, known: 0 };
+    group.items.forEach(i => counts[i.status]++);
+    const first = group.items[0];
+    return `<div class="journal-row" data-goto="${group.s}:${first.a}">
+      <span class="dot ${counts.known === group.items.length ? 'known' : (counts.new === group.items.length ? 'new' : 'learning')}"></span>
+      <span class="nm">${escapeHTML(s.en)}</span>
+      <span class="cnt">${group.items.length} v. · ${counts.known} acquis</span>
+    </div>`;
+  }).join('');
+  box.onclick = (e) => {
+    const r = e.target.closest('[data-goto]'); if (!r) return;
+    const [s, a] = r.dataset.goto.split(':').map(Number);
+    goTo(s, a, { scroll: true }); closePanel('hifz');
+  };
+}
+
+function wireHifz() {
+  $$('#hifz-panel [data-hifztab]').forEach(b => b.onclick = () => {
+    $$('#hifz-panel [data-hifztab]').forEach(x => x.classList.toggle('active', x === b));
+    $('hifztab-dash').classList.toggle('hidden', b.dataset.hifztab !== 'dash');
+    $('hifztab-add').classList.toggle('hidden', b.dataset.hifztab !== 'add');
+    $('hifztab-journal').classList.toggle('hidden', b.dataset.hifztab !== 'journal');
+    if (b.dataset.hifztab === 'journal') renderHifzJournal();
+  });
+  $$('#hz-mask button').forEach(b => b.onclick = () => { store.set('maskLevel', +b.dataset.mask); refreshHifzDash(); });
+
+  $('hz-add-surah-btn').onclick = () => {
+    const s = +$('hz-add-surah').value;
+    const from = parseInt($('hz-from').value, 10);
+    const to = parseInt($('hz-to').value, 10);
+    let n;
+    if (from) n = hifz.addRange(s, from, to || DATA.surahByNum.get(s).cnt);
+    else n = hifz.addSurah(s);
+    toast(`${n} verset(s) ajouté(s)`); refreshHifzDash(); decorateHifz();
+  };
+  $('hz-add-page').onclick = () => { const p = (DATA.bySurah.get(state.surah)?.find(a => a.a === state.topAyah) || {}).p; const n = hifz.addPage(p); toast(`${n} verset(s) ajouté(s)`); refreshHifzDash(); decorateHifz(); };
+  $('hz-add-juz').onclick = () => { const a = DATA.bySurah.get(state.surah)?.find(x => x.a === state.topAyah); const n = hifz.addJuz(a ? a.j : 1); toast(`${n} verset(s) ajouté(s)`); refreshHifzDash(); decorateHifz(); };
+
+  $('hz-start-current').onclick = () => { startMemo(state.surah); closePanel('hifz'); };
+  $('hz-review').onclick = () => { closePanel('hifz'); startReview(); };
+
+  // Barre de masquage
+  $$('#memo-mask button').forEach(b => b.onclick = () => setMemoLevel(+b.dataset.mask));
+  $('memo-peek').onclick = () => { revealAllMasks(true); setTimeout(() => revealAllMasks(false), 1600); };
+  $('memo-exit').onclick = exitMemo;
+
+  // Révision
+  $('review-reveal').onclick = () => { $('review-ar').classList.remove('hidden-text'); $('review-grade').classList.remove('hidden'); $('review-reveal').classList.add('hidden'); };
+  $('review-listen').onclick = () => { const g = review.queue[review.idx]; if (g) player.playAyah(g, { from: g, to: g, count: 1, mode: 'whole' }); };
+  $$('#review-grade button').forEach(b => b.onclick = () => gradeCurrent(b.dataset.grade));
+  $('review-modal').querySelector('[data-close-modal]').addEventListener('click', endReview);
+}
+
+// ---- Session de masquage ----
+function startMemo(surah) {
+  if (recite) stopRecitation(false);
+  let inSurah = (DATA.bySurah.get(surah) || []).filter(a => store.hifzHas(a.g));
+  if (!inSurah.length) { hifz.addSurah(surah); inSurah = DATA.bySurah.get(surah); toast('Sourate ajoutée à la mémorisation'); }
+  renderSurah(surah, {}); observeAyahs(); decorateHifz();
+  memo = { surah, level: store.get('maskLevel') || 2 };
+  applyMemoMask();
+  $('memobar').classList.add('open');
+  $$('#memo-mask button').forEach(b => b.classList.toggle('active', +b.dataset.mask === memo.level));
+}
+function applyMemoMask() {
+  const set = new Set((DATA.bySurah.get(memo.surah) || []).filter(a => store.hifzHas(a.g)).map(a => a.g));
+  applyMask(set, memo.level);
+}
+function setMemoLevel(level) {
+  if (!memo) return;
+  memo.level = level; store.set('maskLevel', level);
+  applyMemoMask();
+  $$('#memo-mask button').forEach(b => b.classList.toggle('active', +b.dataset.mask === level));
+}
+function exitMemo() {
+  if (!memo) return;
+  memo = null; clearMask();
+  $('memobar').classList.remove('open');
+}
+
+// ---- Session de révision espacée ----
+function startReview() {
+  const due = hifz.dueItems();
+  if (!due.length) { toast('Rien à réviser pour l\'instant.'); return; }
+  review = { queue: due.map(it => it.g), idx: 0 };
+  showReviewCard();
+  openModal('review-modal');
+}
+function showReviewCard() {
+  const g = review.queue[review.idx];
+  const a = DATA.byGlobal.get(g); const s = DATA.surahByNum.get(a.s);
+  $('review-ref').textContent = `${s.en} · ${a.s}:${a.a}`;
+  $('review-ar').textContent = a.t;
+  $('review-ar').classList.add('hidden-text');
+  $('review-fr').textContent = a.f;
+  $('review-grade').classList.add('hidden');
+  $('review-reveal').classList.remove('hidden');
+  $('review-count').textContent = `${review.idx + 1} / ${review.queue.length}`;
+}
+function gradeCurrent(q) {
+  const g = review.queue[review.idx];
+  hifz.grade(g, q);
+  markHifz(g, hifz.statusOf(store.hifzGet(g)));
+  review.idx++;
+  if (review.idx >= review.queue.length) { endReview(); toast('Révision terminée. Qu\'Allah facilite.'); }
+  else showReviewCard();
+}
+function endReview() {
+  closeModal('review-modal');
+  if (player.current != null) player.stop();
+  refreshHifzDash();
 }
 
 // ========================================================================
