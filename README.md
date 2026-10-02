@@ -67,6 +67,27 @@ Le projet se publie tel quel : aucun build. Dans les réglages du dépôt → **
 choisir la branche `main` et le dossier `/ (root)`. L'application sera servie en HTTPS,
 ce qui active le *service worker* (hors-ligne) et `crypto.subtle` (intégrité).
 
+## 📱 Application Android (APK)
+
+Un APK est fourni (hors dépôt : `*.apk` est ignoré par git). Il s'agit d'une **TWA**
+(Trusted Web Activity) générée avec [PWABuilder](https://www.pwabuilder.com) à partir de la
+PWA hébergée : l'app Android s'appuie sur le moteur Chrome du téléphone pour afficher le site,
+et le *service worker* assure le fonctionnement hors-ligne après le premier lancement.
+
+**Installer (sideload) :**
+1. Transférer `nur-al-quran.apk` sur le téléphone (câble, e-mail, cloud…).
+2. Autoriser l'installation depuis « sources inconnues » pour l'appli utilisée.
+3. Ouvrir le fichier pour installer, puis lancer **Nûr al-Qur'ân**.
+
+> - 1er lancement : connexion requise (chargement du contenu), puis hors-ligne.
+> - La reconnaissance de la récitation (Lot 2) nécessite Chrome et l'autorisation du micro.
+> - Pour **publier sur le Play Store** ou signer des mises à jour, conserver la clé de signature
+>   générée par PWABuilder (`signing.keystore` + `signing-key-info.txt`, dans l'archive téléchargée).
+
+**Régénérer l'APK :** soit via PWABuilder (URL du site → *Package For Stores* → Android),
+soit localement avec Bubblewrap/Capacitor + Android SDK (nécessite un environnement autorisant
+la communication loopback de Gradle).
+
 ## 🗂️ Structure
 
 ```

@@ -12,3 +12,7 @@ Desktop.ini
 *.log
 /tmp/
 node_modules/
+
+# Artefacts APK / build Android (régénérables)
+*.apk
+*.aab
