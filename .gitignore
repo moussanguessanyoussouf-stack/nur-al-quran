@@ -1,0 +1,14 @@
+# Système
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Éditeurs
+.vscode/
+.idea/
+*.swp
+
+# Temporaire / build local
+*.log
+/tmp/
+node_modules/

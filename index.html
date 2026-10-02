@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5" />
+  <meta name="theme-color" content="#0f7b6c" />
+  <meta name="description" content="Nûr al-Qur'ân — compagnon de lecture, d'écoute et de mémorisation du Saint Coran. Fonctionne hors connexion." />
+  <title>Nûr al-Qur'ân — Lecture du Saint Coran</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- Écran de démarrage -->
+  <div id="splash">
+    <div class="logo">نور</div>
+    <div class="tagline">Nûr al-Qur'ân — compagnon du récitant</div>
+    <div class="bar"><i></i></div>
+    <div class="status" id="splash-status">Chargement du texte…</div>
+  </div>
+
+  <!-- Barre supérieure -->
+  <header class="topbar">
+    <button class="iconbtn" id="btn-menu" aria-label="Navigation" data-ic="menu"></button>
+    <div class="title" id="topbar-title" role="button" tabindex="0" aria-label="Choisir l'emplacement">
+      <b>Le Saint Coran</b>
+      <small>القرآن الكريم</small>
+    </div>
+    <button class="iconbtn" id="btn-search" aria-label="Rechercher" data-ic="search"></button>
+    <button class="iconbtn" id="btn-focus" aria-label="Lecture recueillie" data-ic="focus"></button>
+    <button class="iconbtn" id="btn-settings" aria-label="Réglages" data-ic="settings"></button>
+  </header>
+
+  <!-- Lecteur du Mushaf -->
+  <main class="reader-wrap" id="reader" aria-live="polite"></main>
+
+  <button class="focus-exit" id="focus-exit">Quitter la lecture recueillie ✕</button>
+
+  <!-- Barre audio -->
+  <div class="audiobar" id="audiobar" hidden>
+    <div class="row">
+      <div class="now" id="audio-now"><b>—</b><br><span>Choisissez un verset à écouter</span></div>
+      <div class="controls">
+        <button class="iconbtn" id="au-prev" aria-label="Verset précédent" data-ic="prev"></button>
+        <button class="play-main" id="au-play" aria-label="Lecture / pause" data-ic="play"></button>
+        <button class="iconbtn" id="au-next" aria-label="Verset suivant" data-ic="next"></button>
+        <button class="iconbtn" id="au-repeat" aria-label="Répétition" data-ic="repeat"></button>
+      </div>
+    </div>
+    <div class="seek">
+      <span class="t" id="au-cur">0:00</span>
+      <input type="range" id="au-seek" min="0" max="1000" value="0" aria-label="Progression" />
+      <span class="t" id="au-dur">0:00</span>
+    </div>
+  </div>
+
+  <!-- Scrim partagé -->
+  <div class="scrim" id="scrim"></div>
+
+  <!-- Drawer navigation (gauche) -->
+  <aside class="panel left" id="nav-panel" aria-label="Navigation">
+    <div class="panel-head">
+      <h2>Navigation</h2>
+      <button class="iconbtn" data-close="nav" aria-label="Fermer" data-ic="close"></button>
+    </div>
+    <div class="tabs">
+      <button data-navtab="surah" class="active">Sourates</button>
+      <button data-navtab="jump">Aller à</button>
+    </div>
+    <div class="panel-body">
+      <div id="navtab-surah">
+        <input type="search" class="filter-input" id="surah-filter" placeholder="Filtrer les sourates…" aria-label="Filtrer les sourates" />
+        <ul class="surah-list" id="surah-list"></ul>
+      </div>
+      <div id="navtab-jump" class="hidden">
+        <div class="jump-grid">
+          <div class="full">
+            <label for="jump-juz">Juzʾ (1–30)</label>
+            <select id="jump-juz"></select>
+          </div>
+          <div class="full">
+            <label for="jump-hizb">Ḥizb (quart, 1–240)</label>
+            <select id="jump-hizb"></select>
+          </div>
+          <div>
+            <label for="jump-page">Page (1–604)</label>
+            <input type="number" class="text-input" id="jump-page" min="1" max="604" />
+          </div>
+          <div>
+            <label for="jump-surah">Sourate</label>
+            <select id="jump-surah"></select>
+          </div>
+          <div class="full">
+            <label for="jump-ayah">Verset (dans la sourate)</label>
+            <input type="number" class="text-input" id="jump-ayah" min="1" />
+          </div>
+          <button class="btn primary full" id="jump-go">Aller</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Panneau réglages (droite) -->
+  <aside class="panel right" id="settings-panel" aria-label="Réglages">
+    <div class="panel-head">
+      <h2>Réglages</h2>
+      <button class="iconbtn" data-close="settings" aria-label="Fermer" data-ic="close"></button>
+    </div>
+    <div class="panel-body">
+      <div class="setting">
+        <div class="lbl">Thème d'affichage</div>
+        <div class="seg" id="set-theme">
+          <button data-theme-val="light">Clair</button>
+          <button data-theme-val="sepia">Sépia</button>
+          <button data-theme-val="dark">Sombre</button>
+        </div>
+      </div>
+      <div class="setting">
+        <div class="lbl">Style calligraphique</div>
+        <div class="seg" id="set-font">
+          <button data-font-val="quran">Uthmani</button>
+          <button data-font-val="naskh">Naskh</button>
+        </div>
+      </div>
+      <div class="setting">
+        <div class="lbl">Taille du texte arabe <span class="val" id="val-size"></span></div>
+        <input type="range" id="set-size" min="1.4" max="3.4" step="0.1" />
+      </div>
+      <div class="setting">
+        <div class="lbl">Interligne <span class="val" id="val-lead"></span></div>
+        <input type="range" id="set-lead" min="1.6" max="3" step="0.1" />
+      </div>
+      <div class="setting">
+        <div class="switch"><span class="lbl" style="margin:0">Afficher la traduction française</span>
+          <label class="toggle"><input type="checkbox" id="set-trans"><span class="track"></span></label>
+        </div>
+      </div>
+      <div class="setting">
+        <div class="switch"><span class="lbl" style="margin:0">Afficher la translittération</span>
+          <label class="toggle"><input type="checkbox" id="set-translit"><span class="track"></span></label>
+        </div>
+      </div>
+      <div class="setting">
+        <div class="lbl">Récitateur</div>
+        <select id="set-reciter"></select>
+      </div>
+      <div class="setting">
+        <div class="lbl">Vitesse de récitation <span class="val" id="val-rate"></span></div>
+        <input type="range" id="set-rate" min="0.75" max="1.5" step="0.05" />
+      </div>
+      <div class="setting">
+        <button class="btn full" id="open-bookmarks" style="width:100%">⭐ Mes repères &amp; notes</button>
+      </div>
+      <div class="setting">
+        <button class="btn full" id="open-integrity" style="width:100%">🛡️ Intégrité &amp; sources</button>
+      </div>
+      <div class="setting">
+        <button class="btn full" id="open-about" style="width:100%">À propos</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Répétition (popover simple via modale) -->
+  <div class="modal" id="repeat-modal">
+    <div class="card">
+      <h2>Répétition (boucle)</h2>
+      <div class="setting">
+        <div class="lbl">Étendue</div>
+        <div class="seg" id="rep-scope">
+          <button data-rep="ayah" class="active">Ce verset</button>
+          <button data-rep="range">Plage</button>
+          <button data-rep="page">Page</button>
+        </div>
+      </div>
+      <div class="setting" id="rep-range-row">
+        <div class="jump-grid" style="padding:0">
+          <div><label for="rep-from">Du verset</label><input class="text-input" type="number" id="rep-from" min="1"></div>
+          <div><label for="rep-to">Au verset</label><input class="text-input" type="number" id="rep-to" min="1"></div>
+        </div>
+      </div>
+      <div class="setting">
+        <div class="lbl">Nombre de répétitions <span class="val" id="val-rep"></span></div>
+        <input type="range" id="rep-count" min="1" max="20" step="1">
+      </div>
+      <div class="actions">
+        <button class="btn" data-close-modal="repeat-modal">Annuler</button>
+        <button class="btn primary" id="rep-apply">Activer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feuille d'action d'un verset -->
+  <div class="sheet" id="ayah-sheet">
+    <div class="grab"></div>
+    <div class="sheet-ref" id="sheet-ref"></div>
+    <div class="sheet-actions">
+      <button data-act="play" data-ic-sheet="play"><span>Écouter</span></button>
+      <button data-act="repeat" data-ic-sheet="repeat"><span>Répéter</span></button>
+      <button data-act="bookmark" data-ic-sheet="bookmark"><span>Signet</span></button>
+      <button data-act="note" data-ic-sheet="note"><span>Note</span></button>
+      <button data-act="copy" data-ic-sheet="copy"><span>Copier</span></button>
+      <button data-act="highlight" data-ic-sheet="highlight"><span>Surligner</span></button>
+      <button data-act="tafsir" data-ic-sheet="info"><span>Repères</span></button>
+      <button data-act="close-sheet" data-ic-sheet="close"><span>Fermer</span></button>
+    </div>
+    <div class="hl-colors" id="hl-colors" hidden>
+      <button class="none" data-hl="" aria-label="Aucun"></button>
+      <button data-hl="#ffe08a" style="background:#ffe08a" aria-label="Or"></button>
+      <button data-hl="#a9e5c0" style="background:#a9e5c0" aria-label="Vert"></button>
+      <button data-hl="#a9ccf5" style="background:#a9ccf5" aria-label="Bleu"></button>
+      <button data-hl="#f5b7c4" style="background:#f5b7c4" aria-label="Rose"></button>
+    </div>
+  </div>
+
+  <!-- Modale note -->
+  <div class="modal" id="note-modal">
+    <div class="card">
+      <h2 id="note-title">Note personnelle</h2>
+      <textarea id="note-text" placeholder="Votre note rattachée à ce verset…"></textarea>
+      <div class="actions">
+        <button class="btn danger" id="note-delete">Supprimer</button>
+        <button class="btn" data-close-modal="note-modal">Annuler</button>
+        <button class="btn primary" id="note-save">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale intégrité -->
+  <div class="modal" id="integrity-modal">
+    <div class="card">
+      <h2>Intégrité &amp; sources</h2>
+      <div id="integrity-status"></div>
+      <p style="font-size:.84rem;color:var(--text-soft)">
+        Le texte coranique est contrôlé par une empreinte numérique (SHA-256) vérifiée au
+        chargement. Une empreinte non concordante entraîne un avertissement.
+      </p>
+      <table class="meta-table" id="meta-table"></table>
+      <div class="actions"><button class="btn primary" data-close-modal="integrity-modal">Fermer</button></div>
+    </div>
+  </div>
+
+  <!-- Modale à propos -->
+  <div class="modal" id="about-modal">
+    <div class="card">
+      <h2>À propos de Nûr al-Qur'ân</h2>
+      <p style="font-size:.9rem;line-height:1.6">
+        Compagnon numérique de lecture, d'écoute et de mémorisation du Saint Coran,
+        conçu avec sobriété et respect du texte sacré. Application fonctionnant hors connexion.
+      </p>
+      <div class="notice">
+        <b>Avertissement.</b> Une traduction est une interprétation du sens et non le
+        Coran lui-même. L'assistance à la récitation, lorsqu'elle sera disponible, est une
+        aide et non un substitut à l'enseignement d'un maître qualifié.
+      </div>
+      <p style="font-size:.8rem;color:var(--muted)">Version 1.0 — Lot 1 (socle). Texte en lecture Ḥafṣ ʿan ʿĀṣim.</p>
+      <div class="actions"><button class="btn primary" data-close-modal="about-modal">Fermer</button></div>
+    </div>
+  </div>
+
+  <!-- Panneau repères -->
+  <aside class="panel right" id="bookmarks-panel" aria-label="Repères">
+    <div class="panel-head">
+      <h2>Repères &amp; notes</h2>
+      <button class="iconbtn" data-close="bookmarks" aria-label="Fermer" data-ic="close"></button>
+    </div>
+    <div class="tabs">
+      <button data-bmtab="marks" class="active">Signets</button>
+      <button data-bmtab="notes">Notes</button>
+      <button data-bmtab="recent">Récents</button>
+    </div>
+    <div class="panel-body" id="bookmarks-body"></div>
+  </aside>
+
+  <!-- Recherche plein écran -->
+  <div class="search-panel" id="search-panel">
+    <div class="search-head">
+      <button class="iconbtn" id="search-close" aria-label="Fermer" data-ic="close"></button>
+      <input type="search" class="filter-input" id="search-input" placeholder="Rechercher (arabe ou français, ou 2:255)…" aria-label="Rechercher" />
+    </div>
+    <div class="search-results" id="search-results">
+      <div class="search-empty">Saisissez un mot arabe, un mot français, ou une référence comme « 2:255 ».</div>
+    </div>
+  </div>
+
+  <div id="toasts" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
