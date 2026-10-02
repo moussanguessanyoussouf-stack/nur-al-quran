@@ -421,6 +421,51 @@ select { appearance: none; }
 
 .empty-hint { text-align: center; color: var(--muted); font-size: .88rem; padding: 2rem 1rem; }
 
+/* ---- Mode récitation guidée (Lot 2) ---- */
+.w { transition: color .15s ease, background .15s ease; border-radius: 4px; padding: 0 .02em; }
+.w.w-matched { color: var(--accent); }
+.w.w-current { background: var(--highlight); color: var(--highlight-ink); box-shadow: 0 0 0 2px var(--highlight); }
+.w.w-omitted { color: var(--danger); text-decoration: underline wavy var(--danger); text-underline-offset: 4px; }
+
+.recitebar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 56;
+  background: color-mix(in srgb, var(--surface) 97%, transparent);
+  backdrop-filter: blur(10px); border-top: 2px solid var(--accent);
+  padding: .6rem max(.7rem, env(safe-area-inset-left)) calc(.6rem + env(safe-area-inset-bottom));
+  display: none;
+}
+.recitebar.open { display: block; }
+.recitebar .row { display: flex; align-items: center; gap: .6rem; max-width: var(--maxw); margin: 0 auto; }
+.recitebar .mic {
+  width: 52px; height: 52px; border-radius: 50%; border: none; flex: 0 0 auto;
+  background: var(--accent); color: #fff; display: grid; place-items: center; position: relative;
+}
+.recitebar .mic svg { width: 26px; height: 26px; }
+.recitebar .mic.listening::after {
+  content: ""; position: absolute; inset: -6px; border-radius: 50%;
+  border: 2px solid var(--accent); animation: pulse 1.4s ease-out infinite;
+}
+@keyframes pulse { 0% { transform: scale(.9); opacity: .9 } 100% { transform: scale(1.5); opacity: 0 } }
+.recitebar .info { flex: 1; min-width: 0; }
+.recitebar .info b { font-size: .9rem; }
+.recitebar .info .sub { font-size: .76rem; color: var(--text-soft); }
+.recitebar .progress { height: 6px; background: var(--surface-2); border-radius: 6px; overflow: hidden; margin-top: .5rem; max-width: var(--maxw); margin-inline: auto; }
+.recitebar .progress > i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 6px; transition: width .25s ease; }
+.recitebar .interim { font-family: var(--font-ar); direction: rtl; font-size: 1rem; color: var(--muted); min-height: 1.4em; margin-top: .35rem; text-align: right; max-width: var(--maxw); margin-inline: auto; }
+
+.rec-stat { display: flex; gap: .5rem; text-align: center; margin: .6rem 0; }
+.rec-stat .cell { flex: 1; background: var(--surface-2); border-radius: var(--radius-sm); padding: .6rem .3rem; }
+.rec-stat .cell b { display: block; font-size: 1.4rem; color: var(--accent); }
+.rec-stat .cell span { font-size: .72rem; color: var(--text-soft); }
+.rec-review-list { max-height: 40vh; overflow-y: auto; }
+.rec-review-list .ra { padding: .5rem; border-bottom: 1px solid var(--border); }
+.rec-review-list .ra .ref { font-size: .74rem; color: var(--accent); font-weight: 700; }
+.rec-review-list .ra .ww { font-family: var(--font-ar); direction: rtl; font-size: 1.3rem; color: var(--danger); margin-top: .2rem; }
+
+.consent-list { font-size: .86rem; line-height: 1.6; padding-inline-start: 1.1rem; color: var(--text-soft); }
+.consent-list li { margin-bottom: .3rem; }
+.consent-warn { font-size: .82rem; background: color-mix(in srgb, var(--gold) 16%, transparent); border-inline-start: 3px solid var(--gold); padding: .6rem .7rem; border-radius: 8px; margin: .6rem 0; }
+
 /* ---- Divers ---- */
 .hidden { display: none !important; }
 .spin { animation: spin 1s linear infinite; }

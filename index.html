@@ -29,6 +29,7 @@
       <small>القرآن الكريم</small>
     </div>
     <button class="iconbtn" id="btn-search" aria-label="Rechercher" data-ic="search"></button>
+    <button class="iconbtn" id="btn-recite" aria-label="Récitation guidée" data-ic="mic"></button>
     <button class="iconbtn" id="btn-focus" aria-label="Lecture recueillie" data-ic="focus"></button>
     <button class="iconbtn" id="btn-settings" aria-label="Réglages" data-ic="settings"></button>
   </header>
@@ -281,6 +282,61 @@
     </div>
     <div class="search-results" id="search-results">
       <div class="search-empty">Saisissez un mot arabe, un mot français, ou une référence comme « 2:255 ».</div>
+    </div>
+  </div>
+
+  <!-- Récitation guidée : consentement -->
+  <div class="modal" id="recite-consent">
+    <div class="card">
+      <h2>🎙️ Récitation guidée</h2>
+      <p style="font-size:.9rem;line-height:1.6">
+        Récitez à voix haute : l'application suit votre lecture, surligne votre progression
+        et relève les passages à retravailler.
+      </p>
+      <ul class="consent-list">
+        <li>L'accès au <b>microphone</b> vous sera demandé.</li>
+        <li>La reconnaissance utilise le service vocal de votre navigateur : l'audio peut être
+            envoyé à ce service et <b>une connexion est requise</b>.</li>
+        <li>Fonctionne au mieux sur <b>Chrome</b> ou <b>Edge</b>.</li>
+      </ul>
+      <div class="consent-warn">
+        <b>C'est une aide, non un maître.</b> La reconnaissance de l'arabe coranique est
+        approximative et ne constitue <b>pas une autorité en matière de tajwīd</b>. En cas de
+        doute, référez-vous à un enseignant qualifié.
+      </div>
+      <div class="actions">
+        <button class="btn" data-close-modal="recite-consent">Annuler</button>
+        <button class="btn primary" id="recite-begin">Autoriser le micro et commencer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barre de récitation -->
+  <div class="recitebar" id="recitebar">
+    <div class="row">
+      <button class="mic" id="recite-mic" aria-label="Pause / reprise de l'écoute" data-ic="mic"></button>
+      <div class="info">
+        <b id="recite-title">Récitation guidée</b>
+        <div class="sub" id="recite-sub">Écoute en cours…</div>
+      </div>
+      <button class="iconbtn" id="recite-stop" aria-label="Terminer la séance" data-ic="stop"></button>
+    </div>
+    <div class="progress"><i id="recite-progress"></i></div>
+    <div class="interim" id="recite-interim"></div>
+  </div>
+
+  <!-- Relevé de fin de séance -->
+  <div class="modal" id="recite-review">
+    <div class="card">
+      <h2>Relevé de récitation</h2>
+      <div class="rec-stat">
+        <div class="cell"><b id="rv-progress">0%</b><span>parcouru</span></div>
+        <div class="cell"><b id="rv-accuracy">—</b><span>concordance</span></div>
+        <div class="cell"><b id="rv-omit">0</b><span>à revoir</span></div>
+      </div>
+      <p style="font-size:.82rem;color:var(--text-soft)" id="rv-note"></p>
+      <div class="rec-review-list" id="rv-list"></div>
+      <div class="actions"><button class="btn primary" data-close-modal="recite-review">Fermer</button></div>
     </div>
   </div>
 

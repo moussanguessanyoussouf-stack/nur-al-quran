@@ -28,7 +28,26 @@ Le projet n'utilise **ni Node.js, ni bundler, ni transpileur**. Les raisons :
 | `audio.js` | Lecteur audio : file de lecture, boucle, *Media Session*, construction d'URL. |
 | `reader.js` | Rendu du Mushaf, décorations (signets/notes/surlignages), surlignage de récitation. |
 | `search.js` | Normalisation arabe/latine, recherche texte et par référence. |
+| `recognizer.js` | Reconnaissance vocale (API Web Speech) derrière une interface remplaçable. |
+| `tracker.js` | Alignement de la récitation sur le texte, détection d'écarts, relevé (Lot 2). |
+| `words.js` | Découpage en mots, partagé entre le rendu et l'alignement (index cohérents). |
 | `icons.js` | Jeu d'icônes SVG injecté dans le DOM. |
+
+### Récitation guidée (Lot 2)
+
+Deux responsabilités séparées :
+- **Reconnaissance** (`recognizer.js`) — convertit la voix en texte. Implémentation : API Web Speech
+  du navigateur (Chrome/Edge, en ligne). Interface minimale (`start/stop` + callbacks `final/interim/
+  state/error`) pour permettre de brancher un **moteur embarqué hors-ligne** (ex. Vosk WASM) sans
+  rien changer d'autre — c'est la voie pour satisfaire pleinement RV-05 et la confidentialité NF-11.
+- **Alignement** (`tracker.js`) — 100 % local, testable sans micro. Aligne les mots transcrits sur la
+  séquence attendue (distance de Levenshtein tolérante), avance un curseur, détecte omissions/ajouts,
+  gère les reprises (fenêtre arrière), et produit le relevé de fin de séance. Le rendu mot à mot
+  (`reader.js`, `wordMode`) et l'alignement partagent `words.js`, garantissant des index cohérents
+  entre le DOM et la logique.
+
+> Limites assumées (affichées à l'usager) : la reconnaissance de l'arabe coranique est approximative
+> et n'est **pas une autorité de tajwīd** ; c'est une aide, non un substitut à l'enseignant.
 
 ## Données (`data/`)
 

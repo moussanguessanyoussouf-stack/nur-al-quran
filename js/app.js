@@ -3,13 +3,17 @@ import { paintIcons, ICONS } from './icons.js';
 import { store } from './store.js';
 import { DATA, loadData, nav } from './data.js';
 import { player, RECITERS } from './audio.js';
-import { reader, renderSurah, applyTypography, decorateAyah, setPlaying, toArabicDigits } from './reader.js';
+import { reader, renderSurah, applyTypography, decorateAyah, setPlaying, toArabicDigits,
+         markWord, setCurrentWord, clearWordMarks } from './reader.js';
 import { search, highlightFrench } from './search.js';
+import { WebSpeechRecognizer, isSupported as sttSupported } from './recognizer.js';
+import { Tracker } from './tracker.js';
 
 const $ = (id) => document.getElementById(id);
 const $$ = (sel, r = document) => [...r.querySelectorAll(sel)];
 
 let state = { surah: 0, topAyah: 1, sheetG: null, observer: null };
+let recite = null; // session de récitation guidée en cours
 
 // ========================================================================
 // Démarrage
@@ -166,6 +170,7 @@ function currentJumpField() {
 // ========================================================================
 function goTo(surah, ayah = 1, opts = {}) {
   surah = nav.clampSurah(surah);
+  if (recite && !opts.silent) stopRecitation(false); // fin propre de la récitation si l'on navigue
   if (state.surah !== surah || opts.force) {
     renderSurah(surah, { scrollToAyah: opts.scroll ? ayah : null });
     state.surah = surah;
@@ -462,7 +467,7 @@ function wireEvents() {
   reader.callbacks.toggleBookmark = (g) => { const on = store.toggleBookmark(g); decorateAyah(g); toast(on ? 'Signet ajouté' : 'Signet retiré'); };
   reader.callbacks.nextSurah = () => goTo(state.surah + 1, 1, { scroll: true });
 
-  wireSheet(); wireRepeat(); wireNote(); wireBookmarks(); wireSearch();
+  wireSheet(); wireRepeat(); wireNote(); wireBookmarks(); wireSearch(); wireRecite();
 
   document.addEventListener('keydown', onKey);
 }
@@ -474,7 +479,7 @@ function toggleFocus() {
 
 function onKey(e) {
   if (e.target.matches('input, textarea, select')) return;
-  if (e.key === 'Escape') { closeAllPanels(); closeSearch(); ['repeat-modal','note-modal','integrity-modal','about-modal'].forEach(closeModal); if (document.body.classList.contains('focus-mode')) toggleFocus(); }
+  if (e.key === 'Escape') { if (recite) stopRecitation(true); closeAllPanels(); closeSearch(); ['repeat-modal','note-modal','integrity-modal','about-modal','recite-consent','recite-review'].forEach(closeModal); if (document.body.classList.contains('focus-mode')) toggleFocus(); }
   else if (e.key === ' ') { e.preventDefault(); $('au-play').click(); }
   else if (e.key === 'ArrowRight') player.prev && player.current != null && player.prev(); // RTL : droite = précédent
   else if (e.key === 'ArrowLeft') player.current != null && player.next();
@@ -495,6 +500,122 @@ function renderIntegrity() {
     <tr><td>Versets</td><td>${m.ayah_count} · ${m.surah_count} sourates</td></tr>
     <tr><td>SHA-256 attendu</td><td style="word-break:break-all;font-family:monospace;font-size:.7rem">${I.expected}</td></tr>
     <tr><td>SHA-256 calculé</td><td style="word-break:break-all;font-family:monospace;font-size:.7rem">${I.actual}</td></tr>`;
+}
+
+// ========================================================================
+// Récitation guidée (Lot 2)
+// ========================================================================
+function openReciteConsent() {
+  if (!sttSupported()) {
+    toast('Reconnaissance vocale indisponible ici — essayez Chrome ou Edge.');
+    return;
+  }
+  openModal('recite-consent');
+}
+
+function startRecitation() {
+  closeModal('recite-consent');
+  if (player.current != null) player.stop();
+
+  const first = (DATA.bySurah.get(state.surah) || [])[0];
+  const startG = ayahGlobal(state.surah, state.topAyah) || (first && first.g);
+
+  renderSurah(state.surah, { wordMode: true });
+  observeAyahs();
+
+  const tracker = new Tracker(state.surah, startG);
+  const recognizer = new WebSpeechRecognizer('ar-SA');
+  recite = { recognizer, tracker, hesTimer: null, paused: false };
+
+  tracker.on.word = (e) => markWord(e.key, 'w-matched');
+  tracker.on.omit = (e) => markWord(e.key, 'w-omitted');
+  tracker.on.current = (e) => setCurrentWord(e ? e.key : null);
+  tracker.on.progress = (s) => { $('recite-progress').style.width = Math.round(s.progress * 100) + '%'; };
+
+  recognizer.on.final = (txt) => { if (recite) recite.tracker.processFinal(txt); $('recite-interim').textContent = ''; };
+  recognizer.on.interim = (txt) => { $('recite-interim').textContent = txt; };
+  recognizer.on.state = (listening) => $('recite-mic').classList.toggle('listening', listening);
+  recognizer.on.error = (code) => {
+    if (code === 'not-allowed' || code === 'service-not-allowed') { toast('Accès au micro refusé.'); stopRecitation(false); }
+    else if (code === 'unsupported') { toast('Non supporté sur ce navigateur.'); stopRecitation(false); }
+    else if (code === 'start-failed') { /* relance gérée */ }
+  };
+
+  const cur = tracker.current;
+  setCurrentWord(cur ? cur.key : null);
+
+  $('recitebar').classList.add('open');
+  $('btn-recite').classList.add('active');
+  const sur = DATA.surahByNum.get(state.surah);
+  $('recite-title').textContent = `Récitation — ${sur.en}`;
+  $('recite-sub').textContent = 'Récitez à voix haute…';
+  $('recite-progress').style.width = Math.round(tracker.summary().progress * 100) + '%';
+
+  recognizer.start();
+
+  recite.hesTimer = setInterval(() => {
+    if (!recite || recite.paused) return;
+    $('recite-sub').textContent = (Date.now() - recite.tracker.lastMatchTs > 9000)
+      ? '⏸ En attente — reprenez au mot surligné.'
+      : 'Écoute en cours…';
+  }, 2000);
+}
+
+function toggleRecitePause() {
+  if (!recite) return;
+  if (recite.paused) {
+    recite.paused = false; recite.recognizer.start();
+    $('recite-sub').textContent = 'Écoute en cours…';
+  } else {
+    recite.paused = true; recite.recognizer.stop();
+    $('recite-mic').classList.remove('listening');
+    $('recite-sub').textContent = '⏸ En pause — touchez le micro pour reprendre.';
+  }
+}
+
+function stopRecitation(showReview = true) {
+  if (!recite) return;
+  const tracker = recite.tracker;
+  clearInterval(recite.hesTimer);
+  try { recite.recognizer.stop(); } catch {}
+  recite = null;
+  $('recitebar').classList.remove('open');
+  $('btn-recite').classList.remove('active');
+  $('recite-mic').classList.remove('listening');
+  $('recite-interim').textContent = '';
+  const rev = tracker.review();
+  clearWordMarks();
+  renderSurah(state.surah, { scrollToAyah: state.topAyah });
+  observeAyahs();
+  if (showReview) showReciteReview(rev);
+}
+
+function showReciteReview(rev) {
+  $('rv-progress').textContent = Math.round(rev.progress * 100) + '%';
+  $('rv-accuracy').textContent = rev.cursor ? Math.round(rev.accuracy * 100) + '%' : '—';
+  $('rv-omit').textContent = rev.omittedCount;
+  $('rv-note').textContent = rev.omittedCount
+    ? "Passages non reconnus (à vérifier — peut aussi provenir d'une reconnaissance imparfaite) :"
+    : 'Aucun passage signalé.';
+  $('rv-list').innerHTML = rev.ayahs.map(a => {
+    const ay = DATA.byGlobal.get(a.g); const s = DATA.surahByNum.get(ay.s);
+    return `<div class="ra" data-goto="${ay.s}:${ay.a}">
+      <div class="ref">${escapeHTML(s.en)} ${ay.s}:${ay.a}</div>
+      <div class="ww" dir="rtl">${a.words.map(escapeHTML).join(' ')}</div></div>`;
+  }).join('');
+  $('rv-list').onclick = (e) => {
+    const r = e.target.closest('[data-goto]'); if (!r) return;
+    const [s, a] = r.dataset.goto.split(':').map(Number);
+    closeModal('recite-review'); goTo(s, a, { scroll: true });
+  };
+  openModal('recite-review');
+}
+
+function wireRecite() {
+  $('btn-recite').onclick = openReciteConsent;
+  $('recite-begin').onclick = startRecitation;
+  $('recite-mic').onclick = toggleRecitePause;
+  $('recite-stop').onclick = () => stopRecitation(true);
 }
 
 // ========================================================================

@@ -6,8 +6,9 @@ conçue avec sobriété et respect du texte sacré.
 
 > *Au nom de Dieu, le Tout-Miséricordieux, le Très-Miséricordieux.*
 
-Ce dépôt met en œuvre le **Lot 1 (socle)** du cahier des charges : lecture du Mushaf,
-navigation, écoute audio synchronisée, recherche, repères personnels et hors-ligne.
+Ce dépôt met en œuvre le **Lot 1 (socle)** et le **Lot 2 (reconnaissance de la récitation)**
+du cahier des charges : lecture du Mushaf, navigation, écoute audio synchronisée, recherche,
+repères personnels, hors-ligne, et **récitation guidée** (suivi vocal mot à mot).
 
 ---
 
@@ -28,6 +29,10 @@ navigation, écoute audio synchronisée, recherche, repères personnels et hors-
 - **Intégrité du texte** — empreinte **SHA-256** vérifiée au chargement (avertissement en cas d'écart).
 - **Hors connexion** — *service worker* : coquille, données et polices pré-cachées ;
   récitations mises en cache à la demande.
+- **Récitation guidée (Lot 2)** — récitez à voix haute : l'application **suit votre lecture
+  mot à mot** (surlignage « doigt qui suit »), **détecte les écarts** (omissions, ajouts),
+  **gère les reprises**, et produit un **relevé de fin de séance**. Moteur de reconnaissance :
+  API Web Speech (Chrome/Edge, en ligne) ; moteur d'alignement/détection local et remplaçable.
 - **Respect & bienséance** — aucune publicité, mode de lecture recueillie (épuré),
   masquage non destructif, traitement digne du texte.
 
@@ -64,8 +69,11 @@ js/
   sha256.js             SHA-256 pur (repli hors contexte sécurisé)
   store.js              Persistance locale (réglages, position, repères)
   audio.js              Lecteur (récitateurs, boucle, Media Session)
-  reader.js             Rendu du Mushaf, décorations, surlignage
+  reader.js             Rendu du Mushaf (+ mode mot à mot), décorations, surlignage
   search.js             Recherche (arabe normalisé, français, référence)
+  recognizer.js         Reconnaissance vocale (API Web Speech, interface remplaçable)
+  tracker.js            Alignement récitation/texte + détection d'écarts (Lot 2)
+  words.js              Découpage en mots (partagé rendu/alignement)
   icons.js              Jeu d'icônes SVG
 data/
   surahs.json           Métadonnées des 114 sourates
@@ -98,7 +106,8 @@ docs/
 
 ## 🛣️ Suite (lots ultérieurs)
 
-- **Lot 2** — reconnaissance de la récitation, détection des écarts, relevé de session.
+- **Lot 2** — ✅ reconnaissance de la récitation, détection des écarts, relevé de session.
+  *(Prochaine étape : moteur embarqué hors-ligne — ex. Vosk WASM — pour RV-05 complet, et tajwīd indicatif RV-04.)*
 - **Lot 3** — mémorisation : masquage progressif, répétition espacée, auto-évaluation.
 - **Lot 4** — comptes facultatifs, synchronisation, plans et assignations, statistiques.
 - **Lot 5** — lectures multiples (qirāʾāt), langues additionnelles, compagnon du fidèle.

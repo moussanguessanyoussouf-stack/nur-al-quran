@@ -1,6 +1,7 @@
 // Rendu du Mushaf : sourate à l'écran, basmala, outils par verset, décorations.
 import { DATA } from './data.js';
 import { store } from './store.js';
+import { splitArabic } from './words.js';
 
 const AR_DIGITS = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
 export const toArabicDigits = (n) => String(n).split('').map(d => AR_DIGITS[+d] ?? d).join('');
@@ -33,6 +34,8 @@ export function renderSurah(num, opts = {}) {
 
   const showTrans = store.get('showTrans');
   const showTranslit = store.get('showTranslit');
+  const wordMode = !!opts.wordMode;
+  reader.wordMode = wordMode;
 
   let html = `
     <section class="surah-head">
@@ -46,7 +49,7 @@ export function renderSurah(num, opts = {}) {
   }
 
   for (const a of ayahs) {
-    html += ayahHTML(a, { showTrans, showTranslit });
+    html += ayahHTML(a, { showTrans, showTranslit, wordMode });
   }
 
   if (num < 114) {
@@ -72,10 +75,16 @@ function ayahGlobal(s, a) {
   return x ? x.g : '';
 }
 
-function ayahHTML(a, { showTrans, showTranslit }) {
+function ayahHTML(a, { showTrans, showTranslit, wordMode }) {
   const sajda = a.sj ? '<span class="ayah-sajda" title="Verset de prosternation">۩</span>' : '';
   let block = `<article class="ayah" id="a-${a.g}" data-g="${a.g}" data-s="${a.s}" data-a="${a.a}">`;
-  block += `<div class="ayah-ar" dir="rtl">${esc(a.t)}<span class="ayah-num">${toArabicDigits(a.a)}</span>${sajda}</div>`;
+  let arabic;
+  if (wordMode) {
+    arabic = splitArabic(a.t).map((w, i) => `<span class="w" data-key="${a.g}:${i}">${esc(w)}</span>`).join(' ');
+  } else {
+    arabic = esc(a.t);
+  }
+  block += `<div class="ayah-ar" dir="rtl">${arabic}<span class="ayah-num">${toArabicDigits(a.a)}</span>${sajda}</div>`;
   if (showTranslit && a.r) block += `<div class="ayah-translit">${esc(a.r)}</div>`;
   if (showTrans && a.f) block += `<div class="ayah-trans">${esc(a.f)}</div>`;
   block += `<div class="ayah-note" data-note></div>`;
@@ -143,4 +152,29 @@ export function setPlaying(g) {
     node.classList.add('playing');
     node.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
+}
+
+// ---- Surlignage par mot (mode récitation guidée) ----
+export function markWord(key, cls) {
+  const el = document.querySelector(`.w[data-key="${key}"]`);
+  if (el) el.classList.add(cls);
+}
+let currentWordKey = null;
+export function setCurrentWord(key, scroll = true) {
+  if (currentWordKey) {
+    const prev = document.querySelector(`.w[data-key="${currentWordKey}"]`);
+    if (prev) prev.classList.remove('w-current');
+  }
+  currentWordKey = key;
+  if (!key) return;
+  const el = document.querySelector(`.w[data-key="${key}"]`);
+  if (el) {
+    el.classList.add('w-current');
+    if (scroll) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+}
+export function clearWordMarks() {
+  currentWordKey = null;
+  document.querySelectorAll('.w.w-matched, .w.w-omitted, .w.w-current')
+    .forEach(e => e.classList.remove('w-matched', 'w-omitted', 'w-current'));
 }

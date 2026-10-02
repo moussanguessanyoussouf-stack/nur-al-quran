@@ -50,7 +50,12 @@
 ## Reconnaissance de la récitation (§4.3)
 | Réf | Exigence | État |
 |---|---|---|
-| RV-01..06 | Suivi vocal, détection des écarts, tajwīd | ⬜ **Lot 2** |
+| RV-01 | Suivi vocal + surlignage mot à mot (« doigt qui suit ») | ✅ |
+| RV-02 | Détection des écarts (omissions, ajouts) | 🟡 *(omissions/ajouts ; interversions et hésitation partiels)* |
+| RV-03 | Reprise sans rupture quand l'usager recommence | ✅ *(fenêtre de reprise arrière)* |
+| RV-06 | Relevé de fin de séance (passages à retravailler) | ✅ |
+| RV-05 | Fonctionnement hors ligne | 🟡 *(moteur Web Speech en ligne ; interface prête pour un moteur embarqué — ex. Vosk WASM)* |
+| RV-04 | Inexactitudes de tajwīd | ⬜ *(non traité de façon fiable)* |
 
 ## Mémorisation (§4.4)
 | Réf | Exigence | État |
