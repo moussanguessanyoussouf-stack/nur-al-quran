@@ -4,13 +4,20 @@
       <stop offset="0" stop-color="#128473"/>
       <stop offset="1" stop-color="#0a564b"/>
     </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6e7b0"/>
+      <stop offset="1" stop-color="#b8922f"/>
+    </linearGradient>
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <g fill="none" stroke="#d7b45a" stroke-width="10" opacity="0.5">
-    <rect x="46" y="46" width="420" height="420" rx="84"/>
+  <rect x="43.5" y="43.5" width="425" height="425" rx="77" fill="none" stroke="#d7b45a" stroke-opacity="0.35" stroke-width="6"/>
+  <!-- Étoile à 8 branches (deux carrés superposés) -->
+  <g fill="url(#gold)">
+    <rect x="111" y="111" width="290" height="290"/>
+    <polygon points="461,256 256,51 51,256 256,461"/>
   </g>
-  <!-- Croissant -->
-  <path d="M322 136a132 132 0 1 0 0 240 104 104 0 1 1 0-240z" fill="#e9c976"/>
-  <!-- Étoile -->
-  <path d="M372 214l12 30 32 3-24 22 7 32-27-17-27 17 7-32-24-22 32-3z" fill="#f3e0a6"/>
+  <!-- Octogone central -->
+  <polygon points="335,223 289,177 223,177 177,223 177,289 223,335 289,335 335,289" fill="#0a564b"/>
+  <!-- Cœur serti -->
+  <circle cx="256" cy="256" r="35" fill="#f3e0a6"/>
 </svg>
