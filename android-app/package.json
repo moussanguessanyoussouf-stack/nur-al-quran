@@ -1,0 +1,15 @@
+{
+  "name": "nur-al-quran-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Nûr al-Qur'ân — application Android autonome (Capacitor)",
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor-community/speech-recognition": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.1.2"
+  }
+}

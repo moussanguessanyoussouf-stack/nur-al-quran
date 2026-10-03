@@ -16,3 +16,8 @@ node_modules/
 # Artefacts APK / build Android (régénérables)
 *.apk
 *.aab
+
+# Capacitor (généré par le build CI)
+android-app/node_modules/
+android-app/www/
+android-app/android/

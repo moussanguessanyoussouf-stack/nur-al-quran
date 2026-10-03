@@ -1,0 +1,9 @@
+{
+  "appId": "app.nuralquran.mushaf",
+  "appName": "Nûr al-Qur'ân",
+  "webDir": "www",
+  "backgroundColor": "#0a564b",
+  "android": {
+    "allowMixedContent": false
+  }
+}

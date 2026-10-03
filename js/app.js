@@ -7,7 +7,7 @@ import { reader, renderSurah, renderPage, applyTypography, decorateAyah, setPlay
          markWord, setCurrentWord, clearWordMarks,
          applyMask, clearMask, revealAllMasks, markHifz } from './reader.js';
 import { search, highlightFrench } from './search.js';
-import { WebSpeechRecognizer, isSupported as sttSupported } from './recognizer.js';
+import { createRecognizer, isSupported as sttSupported } from './recognizer.js';
 import { Tracker } from './tracker.js';
 import { loadTajweed, LEGEND as TAJWEED_LEGEND } from './tajweed.js';
 import * as hifz from './hifz.js';
@@ -601,7 +601,7 @@ function startRecitation() {
   observeAyahs();
 
   const tracker = new Tracker(state.surah, startG);
-  const recognizer = new WebSpeechRecognizer('ar-SA');
+  const recognizer = createRecognizer('ar-SA');
   recite = { recognizer, tracker, hesTimer: null, paused: false };
 
   tracker.on.word = (e) => markWord(e.key, 'w-matched');
@@ -1011,6 +1011,8 @@ function deleteAllData() {
 // Service worker
 // ========================================================================
 function registerSW() {
+  // Dans l'app native (Capacitor), les fichiers sont déjà embarqués : pas de service worker.
+  if (globalThis.Capacitor && globalThis.Capacitor.isNativePlatform && globalThis.Capacitor.isNativePlatform()) return;
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW non enregistré', e));
   }
