@@ -8,6 +8,13 @@ export const RECITERS = [
   { id: 'Abdul_Basit_Murattal_192kbps', name: 'ʿAbd al-Bâsiṭ ʿAbd aṣ-Ṣamad (murattal)' },
   { id: 'Abdurrahmaan_As-Sudais_192kbps', name: 'ʿAbd ar-Rahmân As-Sudays' },
   { id: 'Saood_ash-Shuraym_128kbps',    name: 'Suʿûd Ash-Shuraym' },
+  { id: 'Maher_AlMuaiqly_64kbps',       name: 'Mâhir Al-Muʿayqilî' },
+  { id: 'Ghamadi_40kbps',               name: 'Saʿd Al-Ghâmidî' },
+  { id: 'Yasser_Ad-Dussary_128kbps',    name: 'Yâsir Ad-Dawsarî' },
+  { id: 'Hudhaify_128kbps',             name: 'ʿAlî Al-Ḥudhayfî' },
+  { id: 'Abdul_Basit_Mujawwad_128kbps', name: 'ʿAbd al-Bâsiṭ ʿAbd aṣ-Ṣamad (mujawwad)' },
+  { id: 'Muhammad_Ayyoub_128kbps',      name: 'Muhammad Ayyûb' },
+  { id: 'Mohammad_al_Tablaway_128kbps', name: 'Muhammad Aṭ-Ṭablâwî' },
 ];
 
 const BASE = 'https://everyayah.com/data/';

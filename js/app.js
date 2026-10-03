@@ -3,7 +3,7 @@ import { paintIcons, ICONS } from './icons.js';
 import { store } from './store.js';
 import { DATA, loadData, nav } from './data.js';
 import { player, RECITERS } from './audio.js';
-import { reader, renderSurah, renderPage, applyTypography, decorateAyah, setPlaying, toArabicDigits,
+import { reader, renderSurah, renderPage, fitPage, applyTypography, decorateAyah, setPlaying, toArabicDigits,
          markWord, setCurrentWord, clearWordMarks,
          applyMask, clearMask, revealAllMasks, markHifz } from './reader.js';
 import { search, highlightFrench } from './search.js';
@@ -99,7 +99,7 @@ function buildSettings() {
   // Style d'écriture (select)
   const fontSel = $('set-font');
   fontSel.value = store.get('font');
-  fontSel.onchange = () => { store.set('font', fontSel.value); applyTypography(); };
+  fontSel.onchange = () => { store.set('font', fontSel.value); applyTypography(); if (store.get('viewMode') === 'page') fitPage(); };
   // Mode d'affichage (flux / page)
   $$('#set-viewmode button').forEach(b => {
     b.classList.toggle('active', b.dataset.view === store.get('viewMode'));
@@ -113,11 +113,11 @@ function buildSettings() {
   // Taille
   const size = $('set-size'); size.value = store.get('size');
   $('val-size').textContent = store.get('size').toFixed(1);
-  size.oninput = () => { store.set('size', +size.value); $('val-size').textContent = (+size.value).toFixed(1); applyTypography(); };
+  size.oninput = () => { store.set('size', +size.value); $('val-size').textContent = (+size.value).toFixed(1); applyTypography(); if (store.get('viewMode') === 'page') fitPage(); };
   // Interligne
   const lead = $('set-lead'); lead.value = store.get('lead');
   $('val-lead').textContent = store.get('lead').toFixed(1);
-  lead.oninput = () => { store.set('lead', +lead.value); $('val-lead').textContent = (+lead.value).toFixed(1); applyTypography(); };
+  lead.oninput = () => { store.set('lead', +lead.value); $('val-lead').textContent = (+lead.value).toFixed(1); applyTypography(); if (store.get('viewMode') === 'page') fitPage(); };
   // Traduction / translittération
   const tr = $('set-trans'); tr.checked = store.get('showTrans');
   tr.onchange = () => { store.set('showTrans', tr.checked); renderSurah(state.surah, { scrollToAyah: state.topAyah }); observeAyahs(); };
@@ -547,6 +547,11 @@ function wireEvents() {
   wireSheet(); wireRepeat(); wireNote(); wireBookmarks(); wireSearch(); wireRecite(); wireHifz(); wireDash();
 
   document.addEventListener('keydown', onKey);
+  let resizeT = null;
+  window.addEventListener('resize', () => {
+    if (store.get('viewMode') !== 'page') return;
+    clearTimeout(resizeT); resizeT = setTimeout(fitPage, 200);
+  });
 }
 
 function toggleFocus() {

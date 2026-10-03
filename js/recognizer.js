@@ -42,51 +42,70 @@ export class WebSpeechRecognizer {
 }
 
 // ---- Reconnaissance native (Capacitor) ----
+// Sur Android, start() ne renvoie pas les résultats : ils arrivent par l'événement
+// 'partialResults', et la fin d'une phrase par 'listeningState: stopped'. On relance
+// alors l'écoute (mode continu), en ne demandant la permission qu'une seule fois.
 export class NativeRecognizer {
   constructor(lang = 'ar-SA') {
     this.lang = lang; this.active = false; this.plugin = nativePlugin();
     this.on = { final() {}, interim() {}, state() {}, error() {}, end() {} };
-    this._partialHandle = null; this._stateHandle = null; this._lastEmit = '';
+    this._ph = null; this._sh = null; this._last = ''; this._starting = false;
+  }
+  async _ensurePermission() {
+    const p = this.plugin;
+    try {
+      let st = null;
+      if (p.checkPermissions) { try { st = await p.checkPermissions(); } catch {} }
+      let granted = st && (st.speechRecognition === 'granted');
+      if (!granted) {
+        const req = await p.requestPermissions();
+        granted = req && (req.speechRecognition === 'granted' || req.speechRecognition === true || req.granted === true);
+      }
+      return granted;
+    } catch { return true; } // certaines versions n'exposent pas les permissions
   }
   async start() {
     const p = this.plugin;
     if (!p) { this.on.error('unsupported'); return; }
-    try {
-      const perm = await p.requestPermissions();
-      const g = perm && (perm.speechRecognition || perm.recordAudio || perm.granted);
-      if (g && g !== 'granted' && g !== true) { this.on.error('not-allowed'); return; }
-    } catch { /* certaines versions n'exigent pas requestPermissions */ }
+    const granted = await this._ensurePermission();
+    if (!granted) { this.on.error('not-allowed'); return; }
+    try { const av = await (p.available ? p.available() : null); if (av && av.available === false) { this.on.error('unsupported'); return; } } catch {}
     this.active = true;
     try {
-      this._partialHandle = await p.addListener('partialResults', (data) => {
-        const m = data && data.matches; if (m && m.length) this.on.interim(m[0]);
+      this._ph = await p.addListener('partialResults', (d) => {
+        const m = d && d.matches; if (m && m.length) { this._last = m[0]; this.on.interim(m[0]); }
       });
-      this._stateHandle = await p.addListener('listeningState', (data) => {
-        const started = data && data.status === 'started';
-        this.on.state(started);
-        if (!started && this.active) setTimeout(() => this.active && this._listen(), 250);
+      this._sh = await p.addListener('listeningState', (d) => {
+        const status = d && d.status;
+        if (status === 'started') { this.on.state(true); }
+        else {
+          this.on.state(false);
+          if (this._last) { this.on.final(this._last); this._last = ''; }
+          if (this.active) setTimeout(() => this._listen(), 600);
+        }
       });
     } catch {}
     this._listen();
   }
   async _listen() {
-    const p = this.plugin; if (!p || !this.active) return;
+    const p = this.plugin;
+    if (!p || !this.active || this._starting) return;
+    this._starting = true;
     try {
-      const res = await p.start({ language: this.lang, maxResults: 2, partialResults: true, popup: false });
-      // Selon la plateforme, start() peut renvoyer les correspondances finales
-      const matches = res && res.matches;
-      if (matches && matches.length) this.on.final(matches[0]);
+      await p.start({ language: this.lang, maxResults: 3, partialResults: true, popup: false });
+      this._starting = false;
     } catch (e) {
-      const msg = (e && (e.message || e.code || '')).toString().toLowerCase();
+      this._starting = false;
+      const msg = ((e && (e.message || e.code)) || '').toString().toLowerCase();
       if (msg.includes('permission') || msg.includes('denied')) { this.on.error('not-allowed'); this.active = false; }
-      // sinon : relance gérée par listeningState
+      else if (this.active) setTimeout(() => this._listen(), 800); // occupé / pas de parole : on réessaie
     }
   }
   async stop() {
-    this.active = false;
+    this.active = false; this._last = '';
     const p = this.plugin;
-    try { if (this._partialHandle) this._partialHandle.remove(); } catch {}
-    try { if (this._stateHandle) this._stateHandle.remove(); } catch {}
+    try { if (this._ph) (await this._ph).remove ? (await this._ph).remove() : this._ph.remove(); } catch {}
+    try { if (this._sh) this._sh.remove(); } catch {}
     try { if (p) await p.stop(); } catch {}
     this.on.state(false); this.on.end();
   }

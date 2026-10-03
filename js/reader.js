@@ -24,6 +24,7 @@ const FONT_FAMILIES = {
   noto:   "'Noto Naskh Arabic', 'Amiri', serif",
   amiri:  "'Amiri', serif",
   lateef: "'Lateef', 'Scheherazade New', serif",
+  sans:   "'Noto Sans Arabic', 'Segoe UI', sans-serif",
 };
 
 export function applyTypography() {
@@ -127,6 +128,7 @@ export function renderPage(pageNum, opts = {}) {
   el().innerHTML = html;
   window.scrollTo(0, 0);
 
+  fitPage();
   el().querySelectorAll('.ayah-inline').forEach(node => {
     node.addEventListener('click', () => reader.callbacks.openSheet(+node.dataset.g));
   });
@@ -213,6 +215,28 @@ export function setPlaying(g) {
   if (node) {
     node.classList.add('playing');
     node.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+}
+
+// Ajuste la taille du texte pour qu'une page du Mushaf tienne sur un écran.
+// Réduction progressive (s'arrête dès que la page tient) ; repart de la taille de base
+// à chaque appel pour pouvoir ré-agrandir quand l'écran grandit.
+const MIN_PAGE_FONT = 13;
+export function fitPage() {
+  const page = el().querySelector('.mushaf-page');
+  if (!page) return;
+  const texts = [...page.querySelectorAll('.mushaf-text')];
+  if (!texts.length) return;
+  const basePx = (store.get('size') || 2) * 16;
+  const topOffset = page.getBoundingClientRect().top;
+  const avail = window.innerHeight - topOffset - 14;
+  if (avail <= 0) return;
+  let fs = basePx;
+  texts.forEach(t => { t.style.fontSize = fs + 'px'; });
+  let guard = 0;
+  while (page.getBoundingClientRect().height > avail && fs > MIN_PAGE_FONT && guard++ < 40) {
+    fs = Math.max(MIN_PAGE_FONT, fs * 0.94);
+    texts.forEach(t => { t.style.fontSize = fs + 'px'; });
   }
 }
 
