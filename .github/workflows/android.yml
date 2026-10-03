@@ -1,0 +1,100 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'android-app/**'
+      - '.github/workflows/android.yml'
+      - 'index.html'
+      - 'manifest.webmanifest'
+      - 'sw.js'
+      - 'css/**'
+      - 'js/**'
+      - 'data/**'
+      - 'fonts/**'
+      - 'icons/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        working-directory: android-app
+        run: npm install
+
+      - name: Bundle web assets into www/
+        working-directory: android-app
+        run: |
+          rm -rf www && mkdir www
+          cp ../index.html ../manifest.webmanifest ../sw.js www/
+          cp -r ../css ../js ../data ../fonts ../icons www/
+          echo "www content:" && ls www
+
+      - name: Add Android platform
+        working-directory: android-app
+        run: npx cap add android
+
+      - name: Generate app icons
+        working-directory: android-app
+        run: npx @capacitor/assets generate --android || echo "icon generation skipped"
+
+      - name: Sync Capacitor
+        working-directory: android-app
+        run: npx cap sync android
+
+      - name: Ensure microphone permission & speech queries
+        run: |
+          python3 - <<'PY'
+          import re
+          p = 'android-app/android/app/src/main/AndroidManifest.xml'
+          s = open(p, encoding='utf-8').read()
+          add = ''
+          if 'RECORD_AUDIO' not in s:
+              add += '    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n'
+          if 'RecognitionService' not in s:
+              add += ('    <queries>\n'
+                      '        <intent>\n'
+                      '            <action android:name="android.speech.RecognitionService" />\n'
+                      '        </intent>\n'
+                      '    </queries>\n')
+          if add:
+              s = re.sub(r'(<manifest[^>]*>\s*\n)', lambda m: m.group(1) + add, s, count=1)
+              open(p, 'w', encoding='utf-8').write(s)
+              print('AndroidManifest patched')
+          else:
+              print('AndroidManifest already OK')
+          PY
+
+      - name: Build debug APK
+        working-directory: android-app/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Rename APK
+        run: cp android-app/android/app/build/outputs/apk/debug/app-debug.apk nur-al-quran.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nur-al-quran-apk
+          path: nur-al-quran.apk
+          if-no-files-found: error
