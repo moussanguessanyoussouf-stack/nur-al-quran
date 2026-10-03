@@ -18,14 +18,19 @@ function esc(s) {
   return s.replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
 }
 
+const FONT_FAMILIES = {
+  quran:  "'Amiri Quran', 'Amiri', serif",
+  naskh:  "'Scheherazade New', 'Amiri', serif",
+  noto:   "'Noto Naskh Arabic', 'Amiri', serif",
+  amiri:  "'Amiri', serif",
+  lateef: "'Lateef', 'Scheherazade New', serif",
+};
+
 export function applyTypography() {
   const r = document.documentElement.style;
   r.setProperty('--ayah-size', store.get('size') + 'rem');
   r.setProperty('--ayah-leading', store.get('lead'));
-  const fam = store.get('font') === 'naskh'
-    ? "'Scheherazade New', 'Amiri', serif"
-    : "'Amiri Quran', 'Amiri', serif";
-  r.setProperty('--font-ar', fam);
+  r.setProperty('--font-ar', FONT_FAMILIES[store.get('font')] || FONT_FAMILIES.quran);
 }
 
 export function renderSurah(num, opts = {}) {
@@ -82,6 +87,52 @@ export function renderSurah(num, opts = {}) {
 function ayahGlobal(s, a) {
   const x = (DATA.bySurah.get(s) || []).find(v => v.a === a);
   return x ? x.g : '';
+}
+
+// ---- Rendu Mushaf page par page ----
+export function renderPage(pageNum, opts = {}) {
+  pageNum = Math.min(604, Math.max(1, pageNum | 0));
+  const ayahs = DATA.byPage.get(pageNum) || [];
+  reader.wordMode = false;
+  reader.pageNum = pageNum;
+  const tajweedMode = store.get('tajweed') && tajweed.isLoaded();
+
+  let html = `<div class="mushaf-page" dir="rtl">`;
+  let open = false; // un bloc de texte justifié est-il ouvert ?
+  for (const a of ayahs) {
+    if (a.a === 1) {
+      if (open) { html += `</div>`; open = false; }
+      const sur = DATA.surahByNum.get(a.s);
+      html += `<div class="mushaf-surah"><span class="ar">${esc(sur.name)}</span></div>`;
+      if (sur.bism) html += `<div class="basmala">${esc(DATA.meta.basmala)}</div>`;
+    }
+    if (!open) { html += `<div class="mushaf-text">`; open = true; }
+    let txt;
+    if (tajweedMode) txt = tajweed.renderTajweed(tajweed.segmentsFor(a.s, a.a)) || esc(a.t);
+    else txt = esc(a.t);
+    const sajda = a.sj ? '<span class="ayah-sajda" title="Prosternation">۩</span>' : '';
+    html += `<span class="ayah-inline" id="a-${a.g}" data-g="${a.g}" data-s="${a.s}" data-a="${a.a}">${txt}${sajda}<span class="ayah-end">${toArabicDigits(a.a)}</span></span> `;
+  }
+  if (open) html += `</div>`;
+
+  const first = ayahs[0];
+  const juz = first ? first.j : '';
+  const hizb = first ? Math.ceil(first.h / 4) : '';
+  html += `<div class="mushaf-foot">
+    <button class="btn" id="page-prev" ${pageNum <= 1 ? 'disabled' : ''}>← Précédente</button>
+    <span class="mushaf-pagenum">Page ${pageNum} / 604 · Juzʾ ${juz} · Ḥizb ${hizb}</span>
+    <button class="btn" id="page-next" ${pageNum >= 604 ? 'disabled' : ''}>Suivante →</button>
+  </div></div>`;
+
+  el().innerHTML = html;
+  window.scrollTo(0, 0);
+
+  el().querySelectorAll('.ayah-inline').forEach(node => {
+    node.addEventListener('click', () => reader.callbacks.openSheet(+node.dataset.g));
+  });
+  const prev = document.getElementById('page-prev'), next = document.getElementById('page-next');
+  if (prev) prev.addEventListener('click', () => reader.callbacks.gotoPage && reader.callbacks.gotoPage(pageNum - 1));
+  if (next) next.addEventListener('click', () => reader.callbacks.gotoPage && reader.callbacks.gotoPage(pageNum + 1));
 }
 
 function ayahHTML(a, { showTrans, showTranslit, wordMode, tajweedMode }) {

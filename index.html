@@ -120,10 +120,21 @@
         </div>
       </div>
       <div class="setting">
-        <div class="lbl">Style calligraphique</div>
-        <div class="seg" id="set-font">
-          <button data-font-val="quran">Uthmani</button>
-          <button data-font-val="naskh">Naskh</button>
+        <div class="lbl">Style d'écriture (Ḥafṣ)</div>
+        <select id="set-font">
+          <option value="quran">Uthmani — Amiri Quran</option>
+          <option value="naskh">Naskh — Scheherazade</option>
+          <option value="noto">Naskh moderne — Noto Naskh</option>
+          <option value="amiri">Naskh classique — Amiri</option>
+          <option value="lateef">Lateef</option>
+        </select>
+        <div class="notice" style="margin-top:.5rem">Même texte Uthmani en lecture Ḥafṣ ʿan ʿĀṣim, rendu dans différents styles calligraphiques.</div>
+      </div>
+      <div class="setting">
+        <div class="lbl">Mode d'affichage</div>
+        <div class="seg" id="set-viewmode">
+          <button data-view="flow">Par sourate</button>
+          <button data-view="page">Par page (Mushaf)</button>
         </div>
       </div>
       <div class="setting">

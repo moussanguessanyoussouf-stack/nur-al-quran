@@ -3,7 +3,7 @@ import { paintIcons, ICONS } from './icons.js';
 import { store } from './store.js';
 import { DATA, loadData, nav } from './data.js';
 import { player, RECITERS } from './audio.js';
-import { reader, renderSurah, applyTypography, decorateAyah, setPlaying, toArabicDigits,
+import { reader, renderSurah, renderPage, applyTypography, decorateAyah, setPlaying, toArabicDigits,
          markWord, setCurrentWord, clearWordMarks,
          applyMask, clearMask, revealAllMasks, markHifz } from './reader.js';
 import { search, highlightFrench } from './search.js';
@@ -96,12 +96,18 @@ function buildSettings() {
       $$('#set-theme button').forEach(x => x.classList.toggle('active', x === b));
     };
   });
-  // Police
-  $$('#set-font button').forEach(b => {
-    b.classList.toggle('active', b.dataset.fontVal === store.get('font'));
+  // Style d'écriture (select)
+  const fontSel = $('set-font');
+  fontSel.value = store.get('font');
+  fontSel.onchange = () => { store.set('font', fontSel.value); applyTypography(); };
+  // Mode d'affichage (flux / page)
+  $$('#set-viewmode button').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === store.get('viewMode'));
     b.onclick = () => {
-      store.set('font', b.dataset.fontVal); applyTypography();
-      $$('#set-font button').forEach(x => x.classList.toggle('active', x === b));
+      store.set('viewMode', b.dataset.view);
+      $$('#set-viewmode button').forEach(x => x.classList.toggle('active', x === b));
+      if (b.dataset.view === 'page') { const a = DATA.bySurah.get(state.surah)?.find(x => x.a === state.topAyah); gotoPage(a ? a.p : 1); }
+      else { state.surah = 0; goTo(store.get('position').surah, store.get('position').ayah, { scroll: true }); }
     };
   });
   // Taille
@@ -198,10 +204,25 @@ function currentJumpField() {
 // ========================================================================
 // Aller à un emplacement
 // ========================================================================
+function gotoPage(p) {
+  p = Math.min(604, Math.max(1, p | 0));
+  if (recite) stopRecitation(false);
+  if (memo) exitMemo();
+  renderPage(p);
+  const first = nav.page(p)[0];
+  if (first) { state.surah = first.s; state.topAyah = first.a; updateTitle(first.s, first.a); store.setPosition(first.s, first.a); stats.recordPage(p); }
+  store.set('page', p);
+}
+
 function goTo(surah, ayah = 1, opts = {}) {
   surah = nav.clampSurah(surah);
   if (recite && !opts.silent) stopRecitation(false); // fin propre de la récitation si l'on navigue
   if (memo && !opts.silent && memo.surah !== surah) exitMemo(); // sortie du masquage si l'on change de sourate
+  if (store.get('viewMode') === 'page') {
+    const a = (DATA.bySurah.get(surah) || []).find(x => x.a === ayah) || (DATA.bySurah.get(surah) || [])[0];
+    gotoPage(a ? a.p : 1);
+    return;
+  }
   if (state.surah !== surah || opts.force) {
     renderSurah(surah, { scrollToAyah: opts.scroll ? ayah : null });
     state.surah = surah;
@@ -258,12 +279,16 @@ function observeAyahs() {
 // ========================================================================
 function wireAudio() {
   player.on.change = (g) => {
-    setPlaying(g);
     const a = DATA.byGlobal.get(g); const s = DATA.surahByNum.get(a.s);
     $('audiobar').hidden = false;
     $('audio-now').innerHTML = `<b>${escapeHTML(s.en)} ${a.s}:${a.a}</b><br><span>${RECITERS.find(r => r.id === player.reciter)?.name || ''}</span>`;
-    // assure que la sourate affichée correspond
-    if (state.surah !== a.s) { renderSurah(a.s); state.surah = a.s; observeAyahs(); setPlaying(g); }
+    if (store.get('viewMode') === 'page') {
+      if (reader.pageNum !== a.p) { renderPage(a.p); state.surah = a.s; }
+      setPlaying(g);
+    } else {
+      setPlaying(g);
+      if (state.surah !== a.s) { renderSurah(a.s); state.surah = a.s; observeAyahs(); setPlaying(g); }
+    }
   };
   player.on.state = (playing) => {
     $('au-play').innerHTML = playing ? ICONS.pause : ICONS.play;
@@ -517,6 +542,7 @@ function wireEvents() {
   reader.callbacks.play = (g) => player.playAyah(g);
   reader.callbacks.toggleBookmark = (g) => { const on = store.toggleBookmark(g); decorateAyah(g); toast(on ? 'Signet ajouté' : 'Signet retiré'); };
   reader.callbacks.nextSurah = () => goTo(state.surah + 1, 1, { scroll: true });
+  reader.callbacks.gotoPage = gotoPage;
 
   wireSheet(); wireRepeat(); wireNote(); wireBookmarks(); wireSearch(); wireRecite(); wireHifz(); wireDash();
 

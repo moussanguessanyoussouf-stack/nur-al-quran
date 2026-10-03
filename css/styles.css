@@ -25,6 +25,21 @@
   src: url('../fonts/scheherazade-400.woff2') format('woff2');
   font-weight: 400; font-style: normal; font-display: swap;
 }
+@font-face {
+  font-family: 'Noto Naskh Arabic';
+  src: url('../fonts/noto-naskh-400.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Noto Naskh Arabic';
+  src: url('../fonts/noto-naskh-700.woff2') format('woff2');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Lateef';
+  src: url('../fonts/lateef-400.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
 
 /* ---- Jetons de thème ---- */
 :root {
@@ -221,6 +236,32 @@ button { font-family: inherit; cursor: pointer; }
   background: var(--surface-2); border-inline-start: 3px solid var(--gold);
   border-radius: 8px; color: var(--text-soft); white-space: pre-wrap;
 }
+
+/* ---- Vue Mushaf page par page ---- */
+.mushaf-page { max-width: var(--maxw); margin: 0 auto; padding: 1rem 0 2rem; }
+.mushaf-surah {
+  text-align: center; margin: 1.2rem auto .4rem; padding: .5rem 1rem;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: linear-gradient(var(--surface), var(--surface-2));
+}
+.mushaf-surah .ar { font-family: var(--font-ar); font-size: 1.7rem; color: var(--accent-ink); }
+.mushaf-text {
+  font-family: var(--font-ar); direction: rtl; text-align: justify; text-align-last: center;
+  font-size: calc(var(--ayah-size) * .92); line-height: calc(var(--ayah-leading) * 1.05);
+  color: var(--text); word-spacing: .04em; padding: .3rem .2rem;
+}
+.ayah-inline { cursor: pointer; border-radius: 6px; transition: background .15s; }
+.ayah-inline:hover { background: var(--surface-2); }
+.ayah-inline.playing { background: var(--highlight) !important; color: var(--highlight-ink); }
+.ayah-end {
+  display: inline-grid; place-items: center; min-width: 1.7em; height: 1.7em;
+  margin: 0 .15em; font-family: var(--font-ui); font-size: .4em; font-weight: 700;
+  color: var(--gold); border: 1.5px solid var(--gold); border-radius: 50%;
+  vertical-align: middle; padding: 0 .2em; background: var(--surface);
+}
+.mushaf-foot { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-top: 1.6rem; padding: 0 .4rem; }
+.mushaf-foot .btn { flex: 0 0 auto; font-size: .82rem; }
+.mushaf-pagenum { flex: 1; text-align: center; font-size: .74rem; color: var(--text-soft); }
 
 /* ---- Mode lecture recueillie (épuré) ---- */
 body.focus-mode .topbar,

@@ -5,7 +5,9 @@ const KEY = 'nur-quran:v1';
 
 const DEFAULTS = {
   theme: 'light',
-  font: 'quran',          // 'quran' (Uthmani) | 'naskh'
+  font: 'quran',          // style d'écriture : quran | naskh | noto | amiri | lateef
+  viewMode: 'flow',       // 'flow' (par sourate) | 'page' (Mushaf)
+  page: 1,                // dernière page consultée (mode page)
   size: 2.0,              // rem
   lead: 2.2,              // interligne
   showTrans: true,        // traduction française
