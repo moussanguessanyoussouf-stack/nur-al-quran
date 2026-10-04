@@ -25,6 +25,7 @@ const FONT_FAMILIES = {
   amiri:  "'Amiri', serif",
   lateef: "'Lateef', 'Scheherazade New', serif",
   sans:   "'Noto Sans Arabic', 'Segoe UI', sans-serif",
+  nastaliq: "'Noto Nastaliq Urdu', 'Lateef', serif",
 };
 
 export function applyTypography() {

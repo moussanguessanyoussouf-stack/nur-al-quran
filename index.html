@@ -175,6 +175,7 @@
           <option value="amiri">Naskh classique — Amiri</option>
           <option value="lateef">Lateef</option>
           <option value="sans">Simple (débutants) — Noto Sans</option>
+          <option value="nastaliq">Nastaliq (style indo-pakistanais)</option>
         </select>
         <div class="notice" style="margin-top:.5rem">Même texte Uthmani en lecture Ḥafṣ ʿan ʿĀṣim, rendu dans différents styles calligraphiques.</div>
       </div>
@@ -216,6 +217,18 @@
       <div class="setting">
         <div class="lbl">Vitesse de récitation <span class="val" id="val-rate"></span></div>
         <input type="range" id="set-rate" min="0.75" max="1.5" step="0.05" />
+      </div>
+      <div class="setting">
+        <div class="switch"><span class="lbl" style="margin:0">Rappels de lecture</span>
+          <label class="toggle"><input type="checkbox" id="set-notify"><span class="track"></span></label>
+        </div>
+        <div class="lbl" style="margin-top:.6rem">Fréquence des rappels</div>
+        <div class="seg" id="set-objlevel">
+          <button data-lvl="min">Min · 2/j</button>
+          <button data-lvl="moy">Moyen · 3/j</button>
+          <button data-lvl="imp">Soutenu · ~3 h</button>
+        </div>
+        <div class="notice" style="margin-top:.5rem">Les rappels invitent à la lecture si l'objectif du jour n'est pas atteint. Le niveau « Soutenu » cale les rappels sur les <b>horaires de prière</b> (nécessite la localisation). Disponible dans l'application installée.</div>
       </div>
       <div class="setting">
         <button class="btn primary full" id="open-dash" style="width:100%">📊 Tableau de bord</button>
@@ -280,7 +293,8 @@
       <button data-act="copy" data-ic-sheet="copy"><span>Copier</span></button>
       <button data-act="highlight" data-ic-sheet="highlight"><span>Surligner</span></button>
       <button data-act="hifz" data-ic-sheet="brain"><span>Mémoriser</span></button>
-      <button data-act="tafsir" data-ic-sheet="info"><span>Repères</span></button>
+      <button data-act="exegese" data-ic-sheet="book"><span>Tafsîr</span></button>
+      <button data-act="repers" data-ic-sheet="info"><span>Repères</span></button>
       <button data-act="close-sheet" data-ic-sheet="close"><span>Fermer</span></button>
     </div>
     <div class="hl-colors" id="hl-colors" hidden>
@@ -437,6 +451,19 @@
         </div>
         <div class="minichart" id="dash-chart" aria-label="14 derniers jours"></div>
 
+        <div class="dash-card">
+          <h3>Objectifs</h3>
+          <div id="dash-goals"></div>
+          <div class="setting" style="border:none;padding:.4rem 0 0">
+            <div class="lbl">Hebdomadaire <span class="val" id="dash-weekval"></span></div>
+            <input type="range" id="dash-weekrange" min="1" max="100" step="1">
+          </div>
+          <div class="setting" style="border:none;padding:.2rem 0 0">
+            <div class="lbl">Mensuel <span class="val" id="dash-monthval"></span></div>
+            <input type="range" id="dash-monthrange" min="1" max="604" step="1">
+          </div>
+        </div>
+
         <div class="dash-card" id="dash-plan-card">
           <h3>Portion du jour</h3>
           <div id="dash-plan-body"></div>
@@ -547,7 +574,10 @@
         <div class="lbl">Sourate à télécharger</div>
         <select id="dl-surah"></select>
         <button class="btn primary" id="dl-start" style="width:100%;margin-top:.5rem">⬇️ Télécharger cette sourate</button>
+        <button class="btn" id="dl-all" style="width:100%;margin-top:.4rem">⬇️ Télécharger TOUT le récitateur</button>
+        <button class="btn danger" id="dl-stop" style="width:100%;margin-top:.4rem" hidden>■ Arrêter le téléchargement</button>
         <div class="dl-progress" id="dl-progress" hidden><i></i><span></span></div>
+        <p class="notice" style="margin-top:.4rem">Le récitateur complet représente plusieurs centaines de Mo. Préférez le Wi‑Fi.</p>
       </div>
       <div class="setting">
         <div class="lbl">Téléchargées <span class="val" id="dl-estimate"></span></div>
@@ -558,6 +588,16 @@
       </div>
     </div>
   </aside>
+
+  <!-- Tafsîr (exégèse) -->
+  <div class="modal" id="tafsir-modal">
+    <div class="card">
+      <h2 id="tafsir-title">Tafsîr</h2>
+      <select id="tafsir-edition" style="margin-bottom:.6rem"></select>
+      <div id="tafsir-body" class="tafsir-body"></div>
+      <div class="actions"><button class="btn primary" data-close-modal="tafsir-modal">Fermer</button></div>
+    </div>
+  </div>
 
   <!-- Légende tajwīd -->
   <div class="modal" id="tajweed-legend">

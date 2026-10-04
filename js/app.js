@@ -9,6 +9,8 @@ import { search, highlightFrench } from './search.js';
 import { loadTajweed, LEGEND as TAJWEED_LEGEND } from './tajweed.js';
 import { tajwidCourseHTML } from './tajwid-course.js';
 import * as offline from './offline-audio.js';
+import * as tafsir from './tafsir.js';
+import * as reminders from './reminders.js';
 import * as hifz from './hifz.js';
 import * as stats from './stats.js';
 import * as plans from './plans.js';
@@ -64,6 +66,7 @@ async function init() {
 
   registerSW();
   startReadingClock();
+  reminders.init();
 }
 
 // Compteur de temps de lecture (ST-02) : +15 s tant que l'onglet est visible.
@@ -197,6 +200,22 @@ function buildSettings() {
   $('val-rate').textContent = '×' + store.get('rate').toFixed(2);
   rate.oninput = () => { store.set('rate', +rate.value); $('val-rate').textContent = '×' + (+rate.value).toFixed(2); player.setRate(+rate.value); };
   player.setRate(store.get('rate'));
+  // Rappels de lecture
+  const notify = $('set-notify'); notify.checked = store.get('notify');
+  notify.onchange = () => {
+    store.set('notify', notify.checked);
+    if (notify.checked && !(globalThis.Capacitor && globalThis.Capacitor.isNativePlatform && globalThis.Capacitor.isNativePlatform()))
+      toast('Les rappels fonctionnent dans l\'application installée.');
+    reminders.schedule();
+  };
+  $$('#set-objlevel button').forEach(b => {
+    b.classList.toggle('active', b.dataset.lvl === store.get('objLevel'));
+    b.onclick = () => {
+      store.set('objLevel', b.dataset.lvl);
+      $$('#set-objlevel button').forEach(x => x.classList.toggle('active', x === b));
+      if (store.get('notify')) reminders.schedule();
+    };
+  });
 }
 
 function buildReciters() {
@@ -334,7 +353,7 @@ function observeAyahs() {
       updateTitle(s, a);
       store.setPosition(s, a);
       const ay = DATA.byGlobal.get(+node.dataset.g);
-      if (ay) stats.recordPage(ay.p);
+      if (ay) { stats.recordPage(ay.p); reminders.onProgress(); }
     }
   }, { rootMargin: '-80px 0px -60% 0px', threshold: 0 });
   $$('.ayah').forEach(n => state.observer.observe(n));
@@ -404,7 +423,8 @@ function wireSheet() {
       markHifz(g, hifz.statusOf(store.hifzGet(g)));
       closeSheet();
     }
-    else if (act === 'tafsir') { showRepers(g); closeSheet(); }
+    else if (act === 'repers') { showRepers(g); closeSheet(); }
+    else if (act === 'exegese') { closeSheet(); openTafsir(g); }
     else if (act === 'close-sheet') { closeSheet(); }
   });
   $('hl-colors').addEventListener('click', (e) => {
@@ -424,6 +444,41 @@ async function copyAyah(g) {
 function showRepers(g) {
   const a = DATA.byGlobal.get(g);
   toast(`Juzʾ ${a.j} · Ḥizb ${Math.ceil(a.h / 4)} (quart ${((a.h - 1) % 4) + 1}) · Page ${a.p}${a.sj ? ' · prosternation' : ''}`);
+}
+
+// ---- Tafsîr (exégèse) ----
+let tafsirSelReady = false;
+let tafsirG = null;
+function openTafsir(g) {
+  tafsirG = g;
+  const a = DATA.byGlobal.get(g); const s = DATA.surahByNum.get(a.s);
+  if (!tafsirSelReady) {
+    $('tafsir-edition').innerHTML = tafsir.TAFSIRS.map(t => `<option value="${t.slug}">${escapeHTML(t.name)} · ${t.lang.toUpperCase()}</option>`).join('');
+    tafsirSelReady = true;
+  }
+  $('tafsir-edition').value = store.get('tafsirEdition') || 'french-mokhtasar';
+  $('tafsir-title').innerHTML = `Tafsîr <span class="tafsir-ref">${escapeHTML(s.en)} ${a.s}:${a.a}</span>`;
+  openModal('tafsir-modal');
+  loadTafsir();
+}
+async function loadTafsir() {
+  const slug = $('tafsir-edition').value;
+  store.set('tafsirEdition', slug);
+  const a = DATA.byGlobal.get(tafsirG);
+  const body = $('tafsir-body');
+  body.className = 'tafsir-body';
+  body.innerHTML = `<div class="loading">Chargement du tafsîr…</div>`;
+  try {
+    const text = await tafsir.fetchTafsir(slug, a.s, a.a);
+    body.className = 'tafsir-body ' + (tafsir.editionDir(slug) === 'rtl' ? 'rtl' : '');
+    body.textContent = text || 'Aucun texte pour ce verset.';
+  } catch (e) {
+    body.className = 'tafsir-body';
+    body.innerHTML = `<div class="loading">Tafsîr indisponible (connexion requise au premier chargement).</div>`;
+  }
+}
+function wireTafsir() {
+  $('tafsir-edition').onchange = loadTafsir;
 }
 
 // ========================================================================
@@ -611,7 +666,7 @@ function wireEvents() {
   reader.callbacks.nextSurah = () => goTo(state.surah + 1, 1, { scroll: true });
   reader.callbacks.gotoPage = gotoPage;
 
-  wireSheet(); wireRepeat(); wireNote(); wireBookmarks(); wireSearch(); wireHifz(); wireDash(); wireHome(); wireDownloads();
+  wireSheet(); wireRepeat(); wireNote(); wireBookmarks(); wireSearch(); wireHifz(); wireDash(); wireHome(); wireDownloads(); wireTafsir();
 
   document.addEventListener('keydown', onKey);
   let resizeT = null;
@@ -845,6 +900,16 @@ function renderDashToday() {
     `<div class="bar ${d.pages ? 'has' : ''} ${d.key === todayK ? 'today' : ''}" style="height:${Math.round((d.pages / max) * 100)}%" title="${d.key} : ${d.pages} page(s)"></div>`
   ).join('');
 
+  // Objectifs quotidien / hebdomadaire / mensuel + vérification
+  const g = stats.goalsStatus();
+  const row = (label, o) => `<div class="goal-row ${o.met ? 'met' : ''}">
+      <span class="gl">${label}</span>
+      <span class="gp">${o.done} / ${o.goal} p.</span>
+      <span class="gb">${o.met ? '✓ atteint' : '• en cours'}</span></div>`;
+  $('dash-goals').innerHTML = row("Aujourd'hui", g.daily) + row('7 jours', g.week) + row('30 jours', g.month);
+  $('dash-weekrange').value = g.week.goal; $('dash-weekval').textContent = g.week.goal + ' p';
+  $('dash-monthrange').value = g.month.goal; $('dash-monthval').textContent = g.month.goal + ' p';
+
   renderDashPlanCard();
   renderDashHifz();
 }
@@ -917,6 +982,8 @@ function wireDash() {
     if (b.dataset.dashtab === 'plans') renderPlansTab();
   });
   $('dash-goalrange').oninput = () => { store.set('goalPages', +$('dash-goalrange').value); $('dash-goalval').textContent = $('dash-goalrange').value + ' p/j'; renderDashToday(); };
+  $('dash-weekrange').oninput = () => { store.set('goalWeek', +$('dash-weekrange').value); $('dash-weekval').textContent = $('dash-weekrange').value + ' p'; renderDashToday(); };
+  $('dash-monthrange').oninput = () => { store.set('goalMonth', +$('dash-monthrange').value); $('dash-monthval').textContent = $('dash-monthrange').value + ' p'; renderDashToday(); };
   $('plan-create').onclick = () => { plans.createFromTemplate($('plan-template').value); renderPlansTab(); renderDashToday(); toast('Plan créé'); };
   $('plan-create-custom').onclick = () => { plans.createCustom(+$('plan-ppd').value || 1); renderPlansTab(); renderDashToday(); toast('Plan créé'); };
 
@@ -1000,18 +1067,38 @@ async function renderDownloadsList() {
   };
 }
 
+function dlBusy(on) {
+  $('dl-start').disabled = on; $('dl-all').disabled = on;
+  $('dl-stop').hidden = !on; $('dl-progress').hidden = !on;
+}
+function dlProgress(d, t, surah) {
+  const bar = $('dl-progress').querySelector('i'), lab = $('dl-progress').querySelector('span');
+  bar.style.setProperty('--p', Math.round(d / t * 100) + '%');
+  const s = surah ? DATA.surahByNum.get(surah) : null;
+  lab.textContent = `${d}/${t} versets${s ? ' · ' + s.en : ''}`;
+}
 function wireDownloads() {
   $('dl-start').onclick = async () => {
     const reciter = $('dl-reciter').value, surah = +$('dl-surah').value;
     if (await offline.isSurahDownloaded(reciter, surah)) { toast('Déjà téléchargée'); return; }
-    const prog = $('dl-progress'), bar = $('dl-progress').querySelector('i'), lab = $('dl-progress').querySelector('span');
-    prog.hidden = false; $('dl-start').disabled = true;
+    dlBusy(true);
     try {
-      await offline.downloadSurah(reciter, surah, (d, t) => { bar.style.setProperty('--p', Math.round(d / t * 100) + '%'); lab.textContent = `${d}/${t} versets`; });
+      await offline.downloadSurah(reciter, surah, (d, t) => dlProgress(d, t, surah));
       toast('Sourate téléchargée'); renderDownloadsList();
     } catch (err) { toast('Échec du téléchargement (connexion ?)'); }
-    $('dl-start').disabled = false; setTimeout(() => { prog.hidden = true; }, 1200);
+    dlBusy(false); setTimeout(() => { $('dl-progress').hidden = true; }, 1200);
   };
+  $('dl-all').onclick = async () => {
+    const reciter = $('dl-reciter').value;
+    if (!confirm('Télécharger les 114 sourates de ce récitateur ? Cela peut prendre plusieurs centaines de Mo et un long moment.')) return;
+    dlBusy(true);
+    try {
+      const r = await offline.downloadReciter(reciter, (d, t, su) => dlProgress(d, t, su));
+      toast(r.cancelled ? 'Téléchargement arrêté' : 'Récitateur complet téléchargé'); renderDownloadsList();
+    } catch (err) { toast('Échec (connexion ?)'); }
+    dlBusy(false); setTimeout(() => { $('dl-progress').hidden = true; }, 1200);
+  };
+  $('dl-stop').onclick = () => { offline.cancelDownload(); toast('Arrêt en cours…'); };
   $('dl-clear').onclick = async () => {
     if (!confirm('Supprimer toutes les récitations téléchargées ?')) return;
     await offline.clearAll(); toast('Tout supprimé'); renderDownloadsList();

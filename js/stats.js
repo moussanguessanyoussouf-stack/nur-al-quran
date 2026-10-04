@@ -76,6 +76,26 @@ export function summary() {
   };
 }
 
+// Somme des pages lues sur les n derniers jours (glissant).
+export function pagesLastDays(n) {
+  const d = days();
+  let sum = 0; const cur = new Date();
+  for (let i = 0; i < n; i++) { const k = todayKey(cur); sum += d[k] ? Object.keys(d[k].pages).length : 0; cur.setDate(cur.getDate() - 1); }
+  return sum;
+}
+
+// État des objectifs (quotidien / hebdomadaire / mensuel) : atteint ou non.
+export function goalsStatus() {
+  const dp = pagesOn(todayKey()), dg = store.get('goalPages') || 1;
+  const wp = pagesLastDays(7), wg = store.get('goalWeek') || 7;
+  const mp = pagesLastDays(30), mg = store.get('goalMonth') || 30;
+  return {
+    daily: { done: dp, goal: dg, met: dp >= dg },
+    week: { done: wp, goal: wg, met: wp >= wg },
+    month: { done: mp, goal: mg, met: mp >= mg },
+  };
+}
+
 // Activité des 14 derniers jours (pour un mini-graphe).
 function last14() {
   const d = days();

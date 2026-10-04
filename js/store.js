@@ -13,6 +13,7 @@ const DEFAULTS = {
   showTrans: true,        // traduction française
   showTranslit: false,    // translittération
   tajweed: false,         // affichage des règles de tajwīd en couleurs
+  tafsirEdition: 'french-mokhtasar', // édition de tafsir préférée
   reciter: 'Alafasy_128kbps',
   rate: 1.0,
   position: { surah: 1, ayah: 1 },   // dernière position (LC-03)
@@ -24,6 +25,11 @@ const DEFAULTS = {
   maskLevel: 2,           // niveau de masquage par défaut (0 aucun, 1 estompé, 2 masqué)
   stats: { days: {} },    // suivi : { days: { "YYYY-MM-DD": { pages: {p:1}, secs: n } } }
   goalPages: 1,           // objectif quotidien (pages du Mushaf)
+  goalWeek: 7,            // objectif hebdomadaire (pages sur 7 jours glissants)
+  goalMonth: 30,          // objectif mensuel (pages sur 30 jours glissants)
+  objLevel: 'min',        // niveau de rappel : 'min' (2/j) | 'moy' (3/j) | 'imp' (toutes les ~3h)
+  notify: false,          // rappels activés
+  location: null,         // { lat, lng } pour les horaires de prière
   plans: { active: null, items: {} }, // plans de lecture
 };
 

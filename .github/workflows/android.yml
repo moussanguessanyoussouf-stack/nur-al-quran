@@ -67,29 +67,6 @@ jobs:
         working-directory: android-app
         run: npx cap sync android
 
-      - name: Ensure microphone permission & speech queries
-        run: |
-          python3 - <<'PY'
-          import re
-          p = 'android-app/android/app/src/main/AndroidManifest.xml'
-          s = open(p, encoding='utf-8').read()
-          add = ''
-          if 'RECORD_AUDIO' not in s:
-              add += '    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n'
-          if 'RecognitionService' not in s:
-              add += ('    <queries>\n'
-                      '        <intent>\n'
-                      '            <action android:name="android.speech.RecognitionService" />\n'
-                      '        </intent>\n'
-                      '    </queries>\n')
-          if add:
-              s = re.sub(r'(<manifest[^>]*>\s*\n)', lambda m: m.group(1) + add, s, count=1)
-              open(p, 'w', encoding='utf-8').write(s)
-              print('AndroidManifest patched')
-          else:
-              print('AndroidManifest already OK')
-          PY
-
       - name: Build debug APK
         working-directory: android-app/android
         run: |

@@ -50,6 +50,11 @@
   src: url('../fonts/noto-sans-700.woff2') format('woff2');
   font-weight: 700; font-style: normal; font-display: swap;
 }
+@font-face {
+  font-family: 'Noto Nastaliq Urdu';
+  src: url('../fonts/nastaliq-400.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
 
 /* ---- Jetons de thème ---- */
 :root {
@@ -490,6 +495,11 @@ select { appearance: none; }
 .integrity.bad { background: color-mix(in srgb, var(--danger) 18%, transparent); color: var(--danger); }
 .integrity svg { width: 18px; height: 18px; flex: 0 0 auto; }
 
+.tafsir-body { max-height: 56vh; overflow-y: auto; font-size: .92rem; line-height: 1.75; white-space: pre-wrap; }
+.tafsir-body.rtl { direction: rtl; text-align: right; font-family: var(--font-ar); font-size: 1.25rem; line-height: 2; }
+.tafsir-body .loading { color: var(--muted); text-align: center; padding: 1.5rem; }
+.tafsir-ref { font-size: .8rem; color: var(--accent); font-weight: 700; }
+
 .meta-table { width: 100%; font-size: .82rem; border-collapse: collapse; }
 .meta-table td { padding: .35rem .4rem; border-bottom: 1px solid var(--border); vertical-align: top; }
 .meta-table td:first-child { color: var(--text-soft); white-space: nowrap; }
@@ -538,6 +548,12 @@ select { appearance: none; }
 .plan-item .nm small { display: block; color: var(--muted); font-size: .72rem; }
 .plan-item.active .nm b { color: var(--accent); }
 .behind-badge { font-size: .7rem; color: var(--danger); }
+.goal-row { display: flex; align-items: center; gap: .5rem; padding: .35rem 0; border-bottom: 1px solid var(--border); font-size: .85rem; }
+.goal-row:last-child { border-bottom: none; }
+.goal-row .gl { flex: 1; font-weight: 600; }
+.goal-row .gp { color: var(--text-soft); font-variant-numeric: tabular-nums; }
+.goal-row .gb { font-size: .74rem; color: var(--muted); min-width: 68px; text-align: end; }
+.goal-row.met .gb { color: var(--accent); }
 
 /* ---- Mémorisation (ḥifẓ) ---- */
 .ayah-ar.masked { cursor: pointer; border-radius: 8px; transition: opacity .2s, text-shadow .2s, color .2s; }

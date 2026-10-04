@@ -89,6 +89,49 @@ export function tajwidCourseHTML() {
   confondre des lettres proches (ex. س / ص, ت / ط, ه / ح). C'est un point qui demande l'oreille et la
   correction d'un enseignant.</p>
 
+  <h2>9. L'emphase et l'affinement (tafkhîm / tarqîq)</h2>
+  <p>Certaines lettres se prononcent <b>emphatiques</b> (grosses, tafkhîm), d'autres <b>fines</b> (tarqîq).
+  Les lettres d'élévation <b>خُصَّ ضَغْطٍ قِظْ</b> (خ ص ض غ ط ق ظ) sont toujours emphatiques.</p>
+
+  <h3>La lettre Râ (ر)</h3>
+  <ul>
+    <li><b>Emphatique</b> : si elle porte fatha ou damma, ou sukûn précédé de fatha/damma.
+      Ex : <span class="ar" style="font-size:1.4rem">رَبّ — رُزِقوا — وَالعَصْر</span></li>
+    <li><b>Fine</b> : si elle porte kasra, ou sukûn précédé de kasra.
+      Ex : <span class="ar" style="font-size:1.4rem">رِزْق — فِرْعَوْن</span></li>
+  </ul>
+
+  <h3>Le Lâm de « Allah » (lafẓ al-Jalâla)</h3>
+  <ul>
+    <li><b>Emphatique</b> après fatha ou damma : <span class="ar" style="font-size:1.4rem">قَالَ اللَّه — عَبْدُ اللَّه</span></li>
+    <li><b>Fin</b> après kasra : <span class="ar" style="font-size:1.4rem">بِسْمِ اللَّه — قُلْ هُوَ اللَّه</span></li>
+  </ul>
+
+  <h2>10. La hamza : coupante et de liaison</h2>
+  <ul>
+    <li><b>Hamzat al-qaṭʿ</b> (ء / أ / إ) : toujours prononcée.</li>
+    <li><b>Hamzat al-waṣl</b> (ٱ) : prononcée seulement en début de récitation, muette en liaison.
+      Ex : <span class="ar" style="font-size:1.4rem"><span class="tj-silent">ٱ</span>لْحَمْدُ — قَالُوا <span class="tj-silent">ٱ</span>تَّخَذَ</span></li>
+  </ul>
+
+  <h2>11. Les signes de pause (ʿalâmât al-waqf)</h2>
+  <p>De petits signes au-dessus du texte indiquent où s'arrêter ou poursuivre :</p>
+  <ul>
+    <li><b>مـ</b> : arrêt <b>obligatoire</b> (waqf lâzim).</li>
+    <li><b>ﻻ</b> : <b>ne pas</b> s'arrêter.</li>
+    <li><b>ج</b> : arrêt <b>autorisé</b> (indifférent).</li>
+    <li><b>صلى</b> : il vaut mieux <b>continuer</b>.</li>
+    <li><b>قلى</b> : il vaut mieux <b>s'arrêter</b>.</li>
+    <li><b>∴ … ∴</b> (muʿânaqa) : s'arrêter à <b>l'un</b> des deux points, pas aux deux.</li>
+  </ul>
+  <p>Bien choisir ses pauses préserve le sens : on évite de s'arrêter au milieu d'une idée.</p>
+
+  <h2>12. Les attributs des lettres (ṣifât) — aperçu</h2>
+  <p>Au-delà du point d'articulation, chaque lettre a des <b>attributs</b> : sonore/sourde,
+  forte/faible, avec ou sans sifflement, etc. Ils affinent la prononciation (ex. le
+  <i>hams</i> souffle de ف ح ث, le <i>safîr</i> sifflement de س ص ز). Ce point s'acquiert surtout
+  à l'oral.</p>
+
   <div class="note-adab">
     <b>Adab (bienséance).</b> Ce cours est une initiation. La récitation correcte s'acquiert par
     l'écoute attentive des récitateurs et la correction d'un maître (talaqqî). Qu'Allah facilite votre

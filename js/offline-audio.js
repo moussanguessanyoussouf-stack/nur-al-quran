@@ -73,6 +73,29 @@ export async function downloadSurah(reciter, surah, onProgress) {
   return { count: ayahs.length, bytes };
 }
 
+let _cancel = false;
+export function cancelDownload() { _cancel = true; }
+
+// Télécharge TOUTES les sourates d'un récitateur (volumineux). Annulable.
+export async function downloadReciter(reciter, onProgress) {
+  _cancel = false;
+  const surahs = DATA.surahs;
+  const total = surahs.reduce((n, s) => n + s.cnt, 0);
+  let done = 0;
+  for (const s of surahs) {
+    if (_cancel) break;
+    await downloadSurah(reciter, s.n, (d) => { if (onProgress) onProgress(done + d, total, s.n); });
+    done += s.cnt;
+    if (onProgress) onProgress(done, total, s.n);
+  }
+  return { cancelled: _cancel, done, total };
+}
+
+export async function deleteReciter(reciter) {
+  const list = await listDownloads();
+  for (const m of list) if (m.reciter === reciter) await deleteSurah(reciter, m.surah);
+}
+
 export async function deleteSurah(reciter, surah) {
   const ayahs = DATA.bySurah.get(surah) || [];
   const st = await tx(CLIPS, 'readwrite');
