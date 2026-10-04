@@ -163,7 +163,9 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---- Écran d'accueil (menu) ---- */
 #home { min-height: 100vh; max-width: var(--maxw); margin: 0 auto; padding: 1.5rem 1rem calc(2rem + env(safe-area-inset-bottom)); }
-.home-head { text-align: center; padding: 1.5rem 0 1rem; }
+.home-head { text-align: center; padding: 1rem 0 1rem; }
+.home-basmala { font-family: var(--font-ar); font-size: 1.7rem; color: var(--gold); direction: rtl; line-height: 1.8; }
+.home-basmala-fr { font-size: .78rem; color: var(--text-soft); margin: .1rem 0 1rem; }
 .home-logo { font-family: var(--font-ar); font-size: 3.4rem; color: var(--accent); line-height: 1; }
 .home-head h1 { font-size: 1.4rem; margin: .5rem 0 .2rem; }
 .home-head p { color: var(--text-soft); font-size: .85rem; margin: 0 auto; max-width: 28rem; }
@@ -181,7 +183,6 @@ button { font-family: inherit; cursor: pointer; }
 .home-item .hi-txt b { display: block; font-size: 1.02rem; }
 .home-item .hi-txt small { color: var(--text-soft); font-size: .78rem; }
 .home-item .hi-ar { font-family: var(--font-ar); font-size: 1.5rem; color: var(--accent-ink); opacity: .8; }
-.home-foot { text-align: center; font-family: var(--font-ar); color: var(--gold); font-size: 1.2rem; margin-top: 1.6rem; opacity: .8; }
 
 /* ---- Cours de tajwīd ---- */
 #tajwid-view { min-height: 100vh; }

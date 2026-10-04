@@ -1,7 +1,7 @@
 // Service worker — fonctionnement hors ligne (NF-04, NF-05).
 // Coquille + données + polices pré-cachées ; récitations mises en cache à la demande.
 
-const VERSION = 'nur-quran-v10';
+const VERSION = 'nur-quran-v11';
 const SHELL = VERSION + '-shell';
 const AUDIO = VERSION + '-audio';
 
