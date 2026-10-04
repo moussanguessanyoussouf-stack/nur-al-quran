@@ -156,6 +156,43 @@ button { font-family: inherit; cursor: pointer; }
 @keyframes slide { 0%{transform:translateX(-120%)} 100%{transform:translateX(420%)} }
 #splash .status { font-size: .8rem; color: var(--muted); min-height: 1.1em; }
 
+/* ---- Écran d'accueil (menu) ---- */
+#home { min-height: 100vh; max-width: var(--maxw); margin: 0 auto; padding: 1.5rem 1rem calc(2rem + env(safe-area-inset-bottom)); }
+.home-head { text-align: center; padding: 1.5rem 0 1rem; }
+.home-logo { font-family: var(--font-ar); font-size: 3.4rem; color: var(--accent); line-height: 1; }
+.home-head h1 { font-size: 1.4rem; margin: .5rem 0 .2rem; }
+.home-head p { color: var(--text-soft); font-size: .85rem; margin: 0 auto; max-width: 28rem; }
+.home-menu { display: flex; flex-direction: column; gap: .6rem; margin-top: 1.2rem; }
+.home-item {
+  display: flex; align-items: center; gap: .9rem; text-align: start;
+  padding: .9rem 1rem; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-sm); color: var(--text);
+  transition: transform .12s ease, border-color .15s ease;
+}
+.home-item:hover, .home-item:focus-visible { border-color: var(--accent); transform: translateY(-1px); }
+.home-item .hi-ic { flex: 0 0 auto; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: var(--accent-soft); color: var(--accent-ink); font-size: 1.4rem; }
+.home-item .hi-ic svg { width: 24px; height: 24px; }
+.home-item .hi-txt { flex: 1; min-width: 0; }
+.home-item .hi-txt b { display: block; font-size: 1.02rem; }
+.home-item .hi-txt small { color: var(--text-soft); font-size: .78rem; }
+.home-item .hi-ar { font-family: var(--font-ar); font-size: 1.5rem; color: var(--accent-ink); opacity: .8; }
+.home-foot { text-align: center; font-family: var(--font-ar); color: var(--gold); font-size: 1.2rem; margin-top: 1.6rem; opacity: .8; }
+
+/* ---- Cours de tajwīd ---- */
+#tajwid-view { min-height: 100vh; }
+.course { max-width: var(--maxw); margin: 0 auto; padding: 1rem 1rem 4rem; line-height: 1.7; }
+.course h2 { font-size: 1.2rem; color: var(--accent-ink); margin: 1.6rem 0 .5rem; border-bottom: 2px solid var(--accent-soft); padding-bottom: .3rem; }
+.course h3 { font-size: 1rem; margin: 1.1rem 0 .3rem; }
+.course p { margin: .5rem 0; color: var(--text); font-size: .92rem; }
+.course .intro { background: var(--surface-2); border-radius: var(--radius); padding: .9rem 1rem; font-size: .9rem; }
+.course .ex { background: var(--surface); border: 1px solid var(--border); border-inline-start: 3px solid var(--gold); border-radius: var(--radius-sm); padding: .6rem .8rem; margin: .5rem 0; }
+.course .ex .ar { font-family: var(--font-ar); direction: rtl; font-size: 1.9rem; line-height: 1.9; }
+.course .ex .exp { font-size: .82rem; color: var(--text-soft); margin-top: .2rem; }
+.course .rule-color { display: inline-block; padding: 0 .4em; border-radius: 5px; font-weight: 700; }
+.course ul { padding-inline-start: 1.2rem; font-size: .9rem; }
+.course li { margin: .25rem 0; }
+.course .note-adab { background: color-mix(in srgb, var(--gold) 14%, transparent); border-radius: var(--radius-sm); padding: .7rem .8rem; font-size: .85rem; margin: 1rem 0; }
+
 /* ---- Barre supérieure ---- */
 .topbar {
   position: sticky; top: 0; z-index: 50;
@@ -552,6 +589,18 @@ select { appearance: none; }
 .journal-row .dot.known { background: var(--accent); }
 .journal-row .nm { flex: 1; font-size: .85rem; }
 .journal-row .cnt { font-size: .74rem; color: var(--text-soft); }
+
+/* ---- Récitations hors-ligne ---- */
+.dl-progress { margin-top: .6rem; }
+.dl-progress[hidden] { display: none; }
+.dl-progress i { display: block; height: 6px; background: var(--surface-2); border-radius: 6px; overflow: hidden; position: relative; }
+.dl-progress i::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: var(--p, 0%); background: var(--accent); border-radius: 6px; transition: width .2s; }
+.dl-progress span { font-size: .76rem; color: var(--text-soft); }
+.dl-row { display: flex; align-items: center; gap: .5rem; padding: .5rem .3rem; border-bottom: 1px solid var(--border); }
+.dl-row .nm { flex: 1; font-size: .86rem; }
+.dl-row .nm small { display: block; color: var(--muted); font-size: .72rem; }
+.dl-row button { background: transparent; border: none; color: var(--danger); padding: .3rem; border-radius: 8px; }
+.dl-row button svg { width: 18px; height: 18px; }
 
 /* ---- Couleurs tajwīd (affichage des règles) ---- */
 :root {

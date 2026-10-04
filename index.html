@@ -22,15 +22,62 @@
     <div class="status" id="splash-status">Chargement du texte…</div>
   </div>
 
-  <!-- Barre supérieure -->
-  <header class="topbar">
+  <!-- Écran d'accueil (menu principal) -->
+  <section id="home" hidden>
+    <div class="home-head">
+      <div class="home-logo">نور</div>
+      <h1>Nûr al-Qur'ân</h1>
+      <p>Compagnon de lecture, d'écoute et de mémorisation du Saint Coran</p>
+    </div>
+    <nav class="home-menu">
+      <button class="home-item" data-go="coran">
+        <span class="hi-ic" data-ic="book"></span>
+        <span class="hi-txt"><b>Coran</b><small>Lire et écouter le Mushaf</small></span>
+        <span class="hi-ar">القرآن</span>
+      </button>
+      <button class="home-item" data-go="tajwid">
+        <span class="hi-ic" data-ic="info"></span>
+        <span class="hi-txt"><b>Règles de tajwīd</b><small>Cours en français avec exemples</small></span>
+      </button>
+      <button class="home-item" data-go="last">
+        <span class="hi-ic" data-ic="bookmark"></span>
+        <span class="hi-txt"><b>Dernier verset lu</b><small id="home-last">—</small></span>
+      </button>
+      <button class="home-item" data-go="dash">
+        <span class="hi-ic">📊</span>
+        <span class="hi-txt"><b>Tableau de bord</b><small>Objectifs, régularité, plans</small></span>
+      </button>
+      <button class="home-item" data-go="hifz">
+        <span class="hi-ic">🧠</span>
+        <span class="hi-txt"><b>Mémorisation &amp; notes</b><small>Ḥifẓ, répétition espacée, repères</small></span>
+      </button>
+      <button class="home-item" data-go="settings">
+        <span class="hi-ic" data-ic="settings"></span>
+        <span class="hi-txt"><b>Réglages</b><small>Affichage, thème, styles, traductions</small></span>
+      </button>
+    </nav>
+    <div class="home-foot">بسم الله الرحمن الرحيم</div>
+  </section>
+
+  <!-- Cours de tajwīd -->
+  <section id="tajwid-view" hidden>
+    <header class="topbar">
+      <button class="iconbtn" id="tajwid-back" aria-label="Accueil" data-ic="home"></button>
+      <div class="title"><b>Règles de tajwīd</b><small>cours illustré</small></div>
+      <span style="width:44px"></span>
+    </header>
+    <div class="course" id="tajwid-content"></div>
+  </section>
+
+  <!-- Barre supérieure (vue Coran) -->
+  <header class="topbar" id="topbar" hidden>
+    <button class="iconbtn" id="btn-home" aria-label="Accueil" data-ic="home"></button>
     <button class="iconbtn" id="btn-menu" aria-label="Navigation" data-ic="menu"></button>
     <div class="title" id="topbar-title" role="button" tabindex="0" aria-label="Choisir l'emplacement">
       <b>Le Saint Coran</b>
       <small>القرآن الكريم</small>
     </div>
     <button class="iconbtn" id="btn-search" aria-label="Rechercher" data-ic="search"></button>
-    <button class="iconbtn" id="btn-recite" aria-label="Récitation guidée" data-ic="mic"></button>
     <button class="iconbtn" id="btn-focus" aria-label="Lecture recueillie" data-ic="focus"></button>
     <button class="iconbtn" id="btn-settings" aria-label="Réglages" data-ic="settings"></button>
   </header>
@@ -172,6 +219,9 @@
       </div>
       <div class="setting">
         <button class="btn primary full" id="open-dash" style="width:100%">📊 Tableau de bord</button>
+      </div>
+      <div class="setting">
+        <button class="btn full" id="open-downloads" style="width:100%">⬇️ Récitations hors‑ligne</button>
       </div>
       <div class="setting">
         <button class="btn full" id="open-bookmarks" style="width:100%">⭐ Mes repères &amp; notes</button>
@@ -480,60 +530,34 @@
     </div>
   </div>
 
-  <!-- Récitation guidée : consentement -->
-  <div class="modal" id="recite-consent">
-    <div class="card">
-      <h2>🎙️ Récitation guidée</h2>
-      <p style="font-size:.9rem;line-height:1.6">
-        Récitez à voix haute : l'application suit votre lecture, surligne votre progression
-        et relève les passages à retravailler.
-      </p>
-      <ul class="consent-list">
-        <li>L'accès au <b>microphone</b> vous sera demandé.</li>
-        <li>La reconnaissance utilise le service vocal de votre navigateur : l'audio peut être
-            envoyé à ce service et <b>une connexion est requise</b>.</li>
-        <li>Fonctionne au mieux sur <b>Chrome</b> ou <b>Edge</b>.</li>
-      </ul>
-      <div class="consent-warn">
-        <b>C'est une aide, non un maître.</b> La reconnaissance de l'arabe coranique est
-        approximative et ne constitue <b>pas une autorité en matière de tajwīd</b>. En cas de
-        doute, référez-vous à un enseignant qualifié.
+  <!-- Récitations hors-ligne -->
+  <aside class="panel right" id="downloads-panel" aria-label="Récitations hors-ligne">
+    <div class="panel-head">
+      <h2>Récitations hors‑ligne</h2>
+      <button class="iconbtn" data-close="downloads" aria-label="Fermer" data-ic="close"></button>
+    </div>
+    <div class="panel-body">
+      <p class="notice">Téléchargez des sourates pour les écouter <b>sans connexion</b>. Les fichiers
+        sont conservés dans l'appareil et utilisés automatiquement à la lecture.</p>
+      <div class="setting">
+        <div class="lbl">Récitateur</div>
+        <select id="dl-reciter"></select>
       </div>
-      <div class="actions">
-        <button class="btn" data-close-modal="recite-consent">Annuler</button>
-        <button class="btn primary" id="recite-begin">Autoriser le micro et commencer</button>
+      <div class="setting">
+        <div class="lbl">Sourate à télécharger</div>
+        <select id="dl-surah"></select>
+        <button class="btn primary" id="dl-start" style="width:100%;margin-top:.5rem">⬇️ Télécharger cette sourate</button>
+        <div class="dl-progress" id="dl-progress" hidden><i></i><span></span></div>
+      </div>
+      <div class="setting">
+        <div class="lbl">Téléchargées <span class="val" id="dl-estimate"></span></div>
+        <div id="dl-list"></div>
+      </div>
+      <div class="setting">
+        <button class="btn danger" id="dl-clear" style="width:100%">🗑 Tout supprimer</button>
       </div>
     </div>
-  </div>
-
-  <!-- Barre de récitation -->
-  <div class="recitebar" id="recitebar">
-    <div class="row">
-      <button class="mic" id="recite-mic" aria-label="Pause / reprise de l'écoute" data-ic="mic"></button>
-      <div class="info">
-        <b id="recite-title">Récitation guidée</b>
-        <div class="sub" id="recite-sub">Écoute en cours…</div>
-      </div>
-      <button class="iconbtn" id="recite-stop" aria-label="Terminer la séance" data-ic="stop"></button>
-    </div>
-    <div class="progress"><i id="recite-progress"></i></div>
-    <div class="interim" id="recite-interim"></div>
-  </div>
-
-  <!-- Relevé de fin de séance -->
-  <div class="modal" id="recite-review">
-    <div class="card">
-      <h2>Relevé de récitation</h2>
-      <div class="rec-stat">
-        <div class="cell"><b id="rv-progress">0%</b><span>parcouru</span></div>
-        <div class="cell"><b id="rv-accuracy">—</b><span>concordance</span></div>
-        <div class="cell"><b id="rv-omit">0</b><span>à revoir</span></div>
-      </div>
-      <p style="font-size:.82rem;color:var(--text-soft)" id="rv-note"></p>
-      <div class="rec-review-list" id="rv-list"></div>
-      <div class="actions"><button class="btn primary" data-close-modal="recite-review">Fermer</button></div>
-    </div>
-  </div>
+  </aside>
 
   <!-- Légende tajwīd -->
   <div class="modal" id="tajweed-legend">

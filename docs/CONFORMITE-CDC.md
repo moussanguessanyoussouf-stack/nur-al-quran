@@ -44,19 +44,17 @@
 | AU-02 | Mise en évidence + défilement synchronisé | ✅ |
 | AU-03 | Boucle (verset / plage / page), répétitions paramétrables | ✅ |
 | AU-04 | Réglage de la vitesse | ✅ |
-| AU-05 | Téléchargement / écoute hors-ligne | ✅ *(cache à la demande)* |
+| AU-05 | Téléchargement / écoute hors-ligne | ✅ *(téléchargement par sourate, conservé dans l'appareil (IndexedDB), lecture auto hors connexion ; gestion/suppression)* |
 | AU-06 | Arrière-plan, commandes externes (Media Session) | ✅ |
 | AU-07 | Listes d'écoute personnelles | ⬜ |
 
 ## Reconnaissance de la récitation (§4.3)
 | Réf | Exigence | État |
 |---|---|---|
-| RV-01 | Suivi vocal + surlignage mot à mot (« doigt qui suit ») | ✅ |
-| RV-02 | Détection des écarts (omissions, ajouts) | 🟡 *(omissions/ajouts ; interversions et hésitation partiels)* |
-| RV-03 | Reprise sans rupture quand l'usager recommence | ✅ *(fenêtre de reprise arrière)* |
-| RV-06 | Relevé de fin de séance (passages à retravailler) | ✅ |
-| RV-05 | Fonctionnement hors ligne | 🟡 *(moteur Web Speech en ligne ; interface prête pour un moteur embarqué — ex. Vosk WASM)* |
-| RV-04 | Inexactitudes de tajwīd | 🟡 *(affichage des règles de tajwīd en **couleurs**, activable, avec légende — aide à la lecture ; la **détection d'erreurs** de tajwīd par la voix reste non traitée)* |
+| RV-01..06 | Suivi/détection vocale de la récitation | ⛔ **Abandonné** — les moteurs de reconnaissance disponibles (navigateur, Android) ne sont pas fiables sur la psalmodie coranique ; voir [RECONNAISSANCE-VOCALE.md](RECONNAISSANCE-VOCALE.md) pour les vraies pistes (modèle dédié / alignement forcé, nécessitant un backend). |
+
+> Un **affichage des règles de tajwīd en couleurs** (activable) et un **cours de tajwīd en français
+> avec exemples** sont fournis à la place, comme aides à la lecture.
 
 ## Mémorisation (§4.4)
 | Réf | Exigence | État |

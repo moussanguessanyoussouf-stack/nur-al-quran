@@ -1,5 +1,6 @@
 // Lecteur audio : écoute verset par verset, surlignage synchronisé, boucle (AU-01..06).
 import { DATA } from './data.js';
+import { getClipURL } from './offline-audio.js';
 
 export const RECITERS = [
   { id: 'Alafasy_128kbps',              name: 'Mishary Rashid Al-ʿAfâsy' },
@@ -53,9 +54,15 @@ class Player {
   get isPlaying() { return !this.el.paused && !this.el.ended && this.current != null; }
 
   async _load(g) {
-    const url = urlFor(this.reciter, g);
-    if (!url) return;
     this.current = g;
+    // Révoque l'URL blob précédente (hors-ligne) pour éviter les fuites mémoire
+    if (this._blobURL) { try { URL.revokeObjectURL(this._blobURL); } catch {} this._blobURL = null; }
+    // Priorité au clip téléchargé (hors-ligne), sinon flux réseau
+    let url = null;
+    try { url = await getClipURL(this.reciter, g); } catch {}
+    if (url) this._blobURL = url; else url = urlFor(this.reciter, g);
+    if (!url) return;
+    if (this.current !== g) return; // un autre chargement a eu lieu entre-temps
     this.el.src = url;
     this.el.playbackRate = this.rate;
     this.on.change(g);

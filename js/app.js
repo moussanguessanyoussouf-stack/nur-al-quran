@@ -4,12 +4,11 @@ import { store } from './store.js';
 import { DATA, loadData, nav } from './data.js';
 import { player, RECITERS } from './audio.js';
 import { reader, renderSurah, renderPage, fitPage, applyTypography, decorateAyah, setPlaying, toArabicDigits,
-         markWord, setCurrentWord, clearWordMarks,
          applyMask, clearMask, revealAllMasks, markHifz } from './reader.js';
 import { search, highlightFrench } from './search.js';
-import { createRecognizer, isSupported as sttSupported } from './recognizer.js';
-import { Tracker } from './tracker.js';
 import { loadTajweed, LEGEND as TAJWEED_LEGEND } from './tajweed.js';
+import { tajwidCourseHTML } from './tajwid-course.js';
+import * as offline from './offline-audio.js';
 import * as hifz from './hifz.js';
 import * as stats from './stats.js';
 import * as plans from './plans.js';
@@ -18,7 +17,6 @@ const $ = (id) => document.getElementById(id);
 const $$ = (sel, r = document) => [...r.querySelectorAll(sel)];
 
 let state = { surah: 0, topAyah: 1, sheetG: null, observer: null };
-let recite = null; // session de récitation guidée en cours
 let memo = null;   // session de masquage (mémorisation) : { surah, level }
 let review = { queue: [], idx: 0 }; // session de révision espacée
 
@@ -45,14 +43,12 @@ async function init() {
   wireEvents();
   wireAudio();
 
-  // Reprise à la dernière position (LC-03)
-  const pos = store.get('position') || { surah: 1, ayah: 1 };
-  goTo(pos.surah, pos.ayah, { scroll: true, silent: true });
+  // L'application s'ouvre sur le menu d'accueil
+  state.surah = 0;
+  showHome();
 
   // Précharge le tajwīd si l'option était active
-  if (store.get('tajweed')) {
-    loadTajweed().then(() => { renderSurah(state.surah, { scrollToAyah: state.topAyah }); observeAyahs(); }).catch(() => {});
-  }
+  if (store.get('tajweed')) loadTajweed().catch(() => {});
 
   // Avertissement d'intégrité éventuel (AR-02)
   if (DATA.integrity.checked && !DATA.integrity.ok) {
@@ -75,6 +71,69 @@ function startReadingClock() {
   setInterval(() => {
     if (document.visibilityState === 'visible') stats.addSeconds(15);
   }, 15000);
+}
+
+// ========================================================================
+// Navigation entre écrans (accueil / Coran / cours)
+// ========================================================================
+function hideAllViews() {
+  $('home').hidden = true;
+  $('tajwid-view').hidden = true;
+  $('topbar').hidden = true;
+  $('reader').style.display = 'none';
+  $('audiobar').hidden = true;
+}
+
+function showHome() {
+  closeAllPanels(); closeSearch();
+  if (document.body.classList.contains('focus-mode')) toggleFocus();
+  hideAllViews();
+  updateHomeLast();
+  $('home').hidden = false;
+  window.scrollTo(0, 0);
+}
+
+function enterCoran() {
+  hideAllViews();
+  $('topbar').hidden = false;
+  $('reader').style.display = '';
+  const pos = store.get('position') || { surah: 1, ayah: 1 };
+  state.surah = 0; // force le rendu
+  goTo(pos.surah, pos.ayah, { scroll: true, silent: true });
+}
+
+function openTajwidCourse() {
+  hideAllViews();
+  const c = $('tajwid-content');
+  if (!c.dataset.filled) { c.innerHTML = tajwidCourseHTML(); c.dataset.filled = '1'; paintIcons(c); }
+  $('tajwid-view').hidden = false;
+  window.scrollTo(0, 0);
+}
+
+function updateHomeLast() {
+  const pos = store.get('position');
+  const el = $('home-last');
+  if (!el) return;
+  if (pos && DATA.surahByNum && DATA.surahByNum.get(pos.surah)) {
+    const s = DATA.surahByNum.get(pos.surah);
+    el.textContent = `${s.en} · ${pos.surah}:${pos.ayah}`;
+  } else el.textContent = 'Commencer la lecture';
+}
+
+function wireHome() {
+  $('home').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-go]'); if (!b) return;
+    switch (b.dataset.go) {
+      case 'coran': enterCoran(); break;
+      case 'last': enterCoran(); break;
+      case 'tajwid': openTajwidCourse(); break;
+      case 'dash': openDash(); break;         // panneau par-dessus l'accueil
+      case 'hifz': openHifz(); break;
+      case 'settings': openPanel('settings'); break;
+    }
+  });
+  $('btn-home').onclick = showHome;
+  $('tajwid-back').onclick = showHome;
 }
 
 // ========================================================================
@@ -204,9 +263,16 @@ function currentJumpField() {
 // ========================================================================
 // Aller à un emplacement
 // ========================================================================
+function ensureCoranVisible() {
+  $('home').hidden = true;
+  $('tajwid-view').hidden = true;
+  $('topbar').hidden = false;
+  $('reader').style.display = '';
+}
+
 function gotoPage(p) {
   p = Math.min(604, Math.max(1, p | 0));
-  if (recite) stopRecitation(false);
+  ensureCoranVisible();
   if (memo) exitMemo();
   renderPage(p);
   const first = nav.page(p)[0];
@@ -216,7 +282,7 @@ function gotoPage(p) {
 
 function goTo(surah, ayah = 1, opts = {}) {
   surah = nav.clampSurah(surah);
-  if (recite && !opts.silent) stopRecitation(false); // fin propre de la récitation si l'on navigue
+  ensureCoranVisible();
   if (memo && !opts.silent && memo.surah !== surah) exitMemo(); // sortie du masquage si l'on change de sourate
   if (store.get('viewMode') === 'page') {
     const a = (DATA.bySurah.get(surah) || []).find(x => x.a === ayah) || (DATA.bySurah.get(surah) || [])[0];
@@ -498,7 +564,7 @@ function runSearch(q) {
 // ========================================================================
 // Panneaux / modales / scrim
 // ========================================================================
-const PANELS = { nav: 'nav-panel', settings: 'settings-panel', bookmarks: 'bookmarks-panel', hifz: 'hifz-panel', dash: 'dash-panel' };
+const PANELS = { nav: 'nav-panel', settings: 'settings-panel', bookmarks: 'bookmarks-panel', hifz: 'hifz-panel', dash: 'dash-panel', downloads: 'downloads-panel' };
 function openPanel(name) { $(PANELS[name]).classList.add('open'); $('scrim').classList.add('open'); }
 function closePanel(name) { $(PANELS[name]).classList.remove('open'); if (!anyPanelOpen() && !sheetOpen()) $('scrim').classList.remove('open'); }
 function anyPanelOpen() { return Object.values(PANELS).some(id => $(id).classList.contains('open')); }
@@ -532,6 +598,7 @@ function wireEvents() {
 
   $('open-bookmarks').onclick = openBookmarks;
   $('open-dash').onclick = openDash;
+  $('open-downloads').onclick = openDownloads;
   $('open-hifz').onclick = openHifz;
   $('open-integrity').onclick = () => { renderIntegrity(); openModal('integrity-modal'); };
   $('open-about').onclick = () => openModal('about-modal');
@@ -544,7 +611,7 @@ function wireEvents() {
   reader.callbacks.nextSurah = () => goTo(state.surah + 1, 1, { scroll: true });
   reader.callbacks.gotoPage = gotoPage;
 
-  wireSheet(); wireRepeat(); wireNote(); wireBookmarks(); wireSearch(); wireRecite(); wireHifz(); wireDash();
+  wireSheet(); wireRepeat(); wireNote(); wireBookmarks(); wireSearch(); wireHifz(); wireDash(); wireHome(); wireDownloads();
 
   document.addEventListener('keydown', onKey);
   let resizeT = null;
@@ -561,7 +628,7 @@ function toggleFocus() {
 
 function onKey(e) {
   if (e.target.matches('input, textarea, select')) return;
-  if (e.key === 'Escape') { if (recite) stopRecitation(true); if (memo) exitMemo(); closeAllPanels(); closeSearch(); ['repeat-modal','note-modal','integrity-modal','about-modal','recite-consent','recite-review','tajweed-legend','review-modal'].forEach(closeModal); if (document.body.classList.contains('focus-mode')) toggleFocus(); }
+  if (e.key === 'Escape') { if (memo) exitMemo(); closeAllPanels(); closeSearch(); ['repeat-modal','note-modal','integrity-modal','about-modal','tajweed-legend','review-modal'].forEach(closeModal); if (document.body.classList.contains('focus-mode')) toggleFocus(); }
   else if (e.key === ' ') { e.preventDefault(); $('au-play').click(); }
   else if (e.key === 'ArrowRight') player.prev && player.current != null && player.prev(); // RTL : droite = précédent
   else if (e.key === 'ArrowLeft') player.current != null && player.next();
@@ -584,127 +651,11 @@ function renderIntegrity() {
     <tr><td>SHA-256 calculé</td><td style="word-break:break-all;font-family:monospace;font-size:.7rem">${I.actual}</td></tr>`;
 }
 
-// ========================================================================
-// Récitation guidée (Lot 2)
-// ========================================================================
-function openReciteConsent() {
-  if (!sttSupported()) {
-    toast('Reconnaissance vocale indisponible ici — essayez Chrome ou Edge.');
-    return;
-  }
-  openModal('recite-consent');
-}
-
-function startRecitation() {
-  closeModal('recite-consent');
-  if (player.current != null) player.stop();
-
-  const first = (DATA.bySurah.get(state.surah) || [])[0];
-  const startG = ayahGlobal(state.surah, state.topAyah) || (first && first.g);
-
-  renderSurah(state.surah, { wordMode: true });
-  observeAyahs();
-
-  const tracker = new Tracker(state.surah, startG);
-  const recognizer = createRecognizer('ar-SA');
-  recite = { recognizer, tracker, hesTimer: null, paused: false };
-
-  tracker.on.word = (e) => markWord(e.key, 'w-matched');
-  tracker.on.omit = (e) => markWord(e.key, 'w-omitted');
-  tracker.on.current = (e) => setCurrentWord(e ? e.key : null);
-  tracker.on.progress = (s) => { $('recite-progress').style.width = Math.round(s.progress * 100) + '%'; };
-
-  recognizer.on.final = (txt) => { if (recite) recite.tracker.processFinal(txt); $('recite-interim').textContent = ''; };
-  recognizer.on.interim = (txt) => { $('recite-interim').textContent = txt; };
-  recognizer.on.state = (listening) => $('recite-mic').classList.toggle('listening', listening);
-  recognizer.on.error = (code) => {
-    if (code === 'not-allowed' || code === 'service-not-allowed') { toast('Accès au micro refusé.'); stopRecitation(false); }
-    else if (code === 'unsupported') { toast('Non supporté sur ce navigateur.'); stopRecitation(false); }
-    else if (code === 'start-failed') { /* relance gérée */ }
-  };
-
-  const cur = tracker.current;
-  setCurrentWord(cur ? cur.key : null);
-
-  $('recitebar').classList.add('open');
-  $('btn-recite').classList.add('active');
-  const sur = DATA.surahByNum.get(state.surah);
-  $('recite-title').textContent = `Récitation — ${sur.en}`;
-  $('recite-sub').textContent = 'Récitez à voix haute…';
-  $('recite-progress').style.width = Math.round(tracker.summary().progress * 100) + '%';
-
-  recognizer.start();
-
-  recite.hesTimer = setInterval(() => {
-    if (!recite || recite.paused) return;
-    $('recite-sub').textContent = (Date.now() - recite.tracker.lastMatchTs > 9000)
-      ? '⏸ En attente — reprenez au mot surligné.'
-      : 'Écoute en cours…';
-  }, 2000);
-}
-
-function toggleRecitePause() {
-  if (!recite) return;
-  if (recite.paused) {
-    recite.paused = false; recite.recognizer.start();
-    $('recite-sub').textContent = 'Écoute en cours…';
-  } else {
-    recite.paused = true; recite.recognizer.stop();
-    $('recite-mic').classList.remove('listening');
-    $('recite-sub').textContent = '⏸ En pause — touchez le micro pour reprendre.';
-  }
-}
-
-function stopRecitation(showReview = true) {
-  if (!recite) return;
-  const tracker = recite.tracker;
-  clearInterval(recite.hesTimer);
-  try { recite.recognizer.stop(); } catch {}
-  recite = null;
-  $('recitebar').classList.remove('open');
-  $('btn-recite').classList.remove('active');
-  $('recite-mic').classList.remove('listening');
-  $('recite-interim').textContent = '';
-  const rev = tracker.review();
-  clearWordMarks();
-  renderSurah(state.surah, { scrollToAyah: state.topAyah });
-  observeAyahs();
-  if (showReview) showReciteReview(rev);
-}
-
-function showReciteReview(rev) {
-  $('rv-progress').textContent = Math.round(rev.progress * 100) + '%';
-  $('rv-accuracy').textContent = rev.cursor ? Math.round(rev.accuracy * 100) + '%' : '—';
-  $('rv-omit').textContent = rev.omittedCount;
-  $('rv-note').textContent = rev.omittedCount
-    ? "Passages non reconnus (à vérifier — peut aussi provenir d'une reconnaissance imparfaite) :"
-    : 'Aucun passage signalé.';
-  $('rv-list').innerHTML = rev.ayahs.map(a => {
-    const ay = DATA.byGlobal.get(a.g); const s = DATA.surahByNum.get(ay.s);
-    return `<div class="ra" data-goto="${ay.s}:${ay.a}">
-      <div class="ref">${escapeHTML(s.en)} ${ay.s}:${ay.a}</div>
-      <div class="ww" dir="rtl">${a.words.map(escapeHTML).join(' ')}</div></div>`;
-  }).join('');
-  $('rv-list').onclick = (e) => {
-    const r = e.target.closest('[data-goto]'); if (!r) return;
-    const [s, a] = r.dataset.goto.split(':').map(Number);
-    closeModal('recite-review'); goTo(s, a, { scroll: true });
-  };
-  openModal('recite-review');
-}
-
 function openTajweedLegend() {
   $('tajweed-legend-list').innerHTML = TAJWEED_LEGEND.map(x =>
     `<div class="legend-row"><span class="sw" style="background:var(--tj-${x.cat})"></span><span class="lab">${escapeHTML(x.label)}</span></div>`
   ).join('');
   openModal('tajweed-legend');
-}
-
-function wireRecite() {
-  $('btn-recite').onclick = openReciteConsent;
-  $('recite-begin').onclick = startRecitation;
-  $('recite-mic').onclick = toggleRecitePause;
-  $('recite-stop').onclick = () => stopRecitation(true);
 }
 
 // ========================================================================
@@ -798,7 +749,6 @@ function wireHifz() {
 
 // ---- Session de masquage ----
 function startMemo(surah) {
-  if (recite) stopRecitation(false);
   let inSurah = (DATA.bySurah.get(surah) || []).filter(a => store.hifzHas(a.g));
   if (!inSurah.length) { hifz.addSurah(surah); inSurah = DATA.bySurah.get(surah); toast('Sourate ajoutée à la mémorisation'); }
   renderSurah(surah, {}); observeAyahs(); decorateHifz();
@@ -1010,6 +960,62 @@ function deleteAllData() {
   if (window.caches) caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
   toast('Données supprimées');
   setTimeout(() => location.reload(), 600);
+}
+
+// ========================================================================
+// Récitations hors-ligne
+// ========================================================================
+let dlSelectsReady = false;
+function openDownloads() {
+  if (!dlSelectsReady) {
+    $('dl-reciter').innerHTML = RECITERS.map(r => `<option value="${r.id}">${escapeHTML(r.name)}</option>`).join('');
+    $('dl-reciter').value = store.get('reciter');
+    $('dl-surah').innerHTML = DATA.surahs.map(s => `<option value="${s.n}">${s.n}. ${escapeHTML(s.en)} (${s.cnt} v.)</option>`).join('');
+    $('dl-surah').value = state.surah || 1;
+    dlSelectsReady = true;
+  }
+  renderDownloadsList();
+  closePanel('settings'); openPanel('downloads');
+}
+
+async function renderDownloadsList() {
+  const list = await offline.listDownloads();
+  const est = await offline.storageEstimate();
+  $('dl-estimate').textContent = (est && est.usage != null) ? `· ${(est.usage / 1048576).toFixed(0)} Mo utilisés` : '';
+  const box = $('dl-list');
+  if (!list.length) { box.innerHTML = `<div class="empty-hint" style="padding:1rem .2rem">Aucune récitation téléchargée.</div>`; box.onclick = null; return; }
+  list.sort((a, b) => (a.reciter + '').localeCompare(b.reciter) || a.surah - b.surah);
+  box.innerHTML = list.map(m => {
+    const s = DATA.surahByNum.get(m.surah); const rec = RECITERS.find(r => r.id === m.reciter);
+    return `<div class="dl-row" data-rec="${m.reciter}" data-sur="${m.surah}">
+      <div class="nm"><b>${escapeHTML(s ? s.en : 'S' + m.surah)}</b><small>${escapeHTML(rec ? rec.name : m.reciter)} · ${(m.bytes / 1048576).toFixed(1)} Mo</small></div>
+      <button data-del aria-label="Supprimer"></button></div>`;
+  }).join('');
+  box.querySelectorAll('[data-del]').forEach(b => b.innerHTML = ICONS.trashsm);
+  box.onclick = async (e) => {
+    const b = e.target.closest('[data-del]'); if (!b) return;
+    const row = b.closest('.dl-row');
+    await offline.deleteSurah(row.dataset.rec, +row.dataset.sur);
+    toast('Supprimé'); renderDownloadsList();
+  };
+}
+
+function wireDownloads() {
+  $('dl-start').onclick = async () => {
+    const reciter = $('dl-reciter').value, surah = +$('dl-surah').value;
+    if (await offline.isSurahDownloaded(reciter, surah)) { toast('Déjà téléchargée'); return; }
+    const prog = $('dl-progress'), bar = $('dl-progress').querySelector('i'), lab = $('dl-progress').querySelector('span');
+    prog.hidden = false; $('dl-start').disabled = true;
+    try {
+      await offline.downloadSurah(reciter, surah, (d, t) => { bar.style.setProperty('--p', Math.round(d / t * 100) + '%'); lab.textContent = `${d}/${t} versets`; });
+      toast('Sourate téléchargée'); renderDownloadsList();
+    } catch (err) { toast('Échec du téléchargement (connexion ?)'); }
+    $('dl-start').disabled = false; setTimeout(() => { prog.hidden = true; }, 1200);
+  };
+  $('dl-clear').onclick = async () => {
+    if (!confirm('Supprimer toutes les récitations téléchargées ?')) return;
+    await offline.clearAll(); toast('Tout supprimé'); renderDownloadsList();
+  };
 }
 
 // ========================================================================
