@@ -162,27 +162,31 @@ button { font-family: inherit; cursor: pointer; }
 #splash .status { font-size: .8rem; color: var(--muted); min-height: 1.1em; }
 
 /* ---- Écran d'accueil (menu) ---- */
-#home { min-height: 100vh; max-width: var(--maxw); margin: 0 auto; padding: 1.5rem 1rem calc(2rem + env(safe-area-inset-bottom)); }
-.home-head { text-align: center; padding: 1rem 0 1rem; }
-.home-basmala { font-family: var(--font-ar); font-size: 1.7rem; color: var(--gold); direction: rtl; line-height: 1.8; }
-.home-basmala-fr { font-size: .78rem; color: var(--text-soft); margin: .1rem 0 1rem; }
-.home-logo { font-family: var(--font-ar); font-size: 3.4rem; color: var(--accent); line-height: 1; }
-.home-head h1 { font-size: 1.4rem; margin: .5rem 0 .2rem; }
-.home-head p { color: var(--text-soft); font-size: .85rem; margin: 0 auto; max-width: 28rem; }
-.home-menu { display: flex; flex-direction: column; gap: .6rem; margin-top: 1.2rem; }
+#home {
+  min-height: 100dvh; max-width: var(--maxw); margin: 0 auto;
+  padding: .4rem .9rem calc(.5rem + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; justify-content: center; gap: .35rem;
+}
+.home-head { text-align: center; }
+.home-basmala { font-family: var(--font-ar); font-size: 1.1rem; color: var(--gold); direction: rtl; line-height: 1.5; }
+.home-logo { font-family: var(--font-ar); font-size: 1.8rem; color: var(--accent); line-height: 1.1; }
+.home-head h1 { font-size: 1.1rem; margin: 0; }
+.home-head p { color: var(--text-soft); font-size: .76rem; margin: .1rem auto 0; max-width: 24rem; line-height: 1.25; }
+.home-menu { display: flex; flex-direction: column; gap: .35rem; margin-top: .4rem; }
 .home-item {
-  display: flex; align-items: center; gap: .9rem; text-align: start;
-  padding: .9rem 1rem; background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); box-shadow: var(--shadow-sm); color: var(--text);
+  display: flex; align-items: center; gap: .7rem; text-align: start;
+  padding: .5rem .75rem; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); color: var(--text);
   transition: transform .12s ease, border-color .15s ease;
 }
 .home-item:hover, .home-item:focus-visible { border-color: var(--accent); transform: translateY(-1px); }
-.home-item .hi-ic { flex: 0 0 auto; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: var(--accent-soft); color: var(--accent-ink); font-size: 1.4rem; }
-.home-item .hi-ic svg { width: 24px; height: 24px; }
+.home-item .hi-ic { flex: 0 0 auto; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; background: var(--accent-soft); color: var(--accent-ink); font-size: 1.1rem; }
+.home-item .hi-ic svg { width: 19px; height: 19px; }
+@media (max-height: 720px) { .home-head p { display: none; } .home-logo { font-size: 1.5rem; } }
 .home-item .hi-txt { flex: 1; min-width: 0; }
-.home-item .hi-txt b { display: block; font-size: 1.02rem; }
-.home-item .hi-txt small { color: var(--text-soft); font-size: .78rem; }
-.home-item .hi-ar { font-family: var(--font-ar); font-size: 1.5rem; color: var(--accent-ink); opacity: .8; }
+.home-item .hi-txt b { display: block; font-size: .95rem; }
+.home-item .hi-txt small { color: var(--text-soft); font-size: .72rem; }
+.home-item .hi-ar { font-family: var(--font-ar); font-size: 1.3rem; color: var(--accent-ink); opacity: .8; }
 
 /* ---- Cours de tajwīd ---- */
 #tajwid-view { min-height: 100vh; }
@@ -236,8 +240,8 @@ button { font-family: inherit; cursor: pointer; }
 .surah-head .meta { color: var(--muted); font-size: .78rem; margin-top: .35rem; }
 .basmala {
   text-align: center; font-family: var(--font-ar);
-  font-size: calc(var(--ayah-size) * .92); color: var(--gold);
-  margin: 1.2rem 0 1.6rem; direction: rtl;
+  font-size: 1.6rem; color: var(--gold);
+  margin: 1.2rem 0 1.6rem; direction: rtl; line-height: 1.6;
 }
 
 /* Un verset */
